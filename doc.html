@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 22mm 18mm 22mm;
+    @bottom-left  { content: "Offer捕手 · 学生求职匹配智能体 · 作业方案说明"; font-family: "Noto Sans CJK SC"; font-size: 8pt; color: #9aa0a8; }
+    @bottom-right { content: "第 " counter(page) " 页"; font-family: "Noto Sans CJK SC"; font-size: 8pt; color: #9aa0a8; }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Noto Sans CJK SC", sans-serif; color: #2b2f36; font-size: 10.4pt; line-height: 1.85; }
+
+  .bar { height: 4px; background: #0052D9; border-radius: 2px; }
+  .title { font-size: 21pt; font-weight: 700; color: #1a1a1a; margin-top: 14px; letter-spacing: .5px; }
+  .subtitle { font-size: 10.5pt; color: #6b7178; margin-top: 6px; }
+  .rule { border: none; border-top: 1.4px solid #0052D9; margin: 12px 0 18px; }
+
+  .sec { margin-top: 16px; }
+  .sec-head { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+  .sec-num { width: 19px; height: 19px; background: #0052D9; color: #fff; border-radius: 4px;
+             font-size: 10.5pt; font-weight: 700; text-align: center; line-height: 19px; }
+  .sec-title { font-size: 12.5pt; font-weight: 700; color: #0052D9; }
+  p { text-indent: 2em; margin-bottom: 5px; text-align: justify; }
+  p.flush { text-indent: 0; }
+  b, strong { color: #1a1a1a; font-weight: 700; }
+  .em { color: #0046bd; font-weight: 700; }
+  code { font-family: "Noto Sans Mono CJK SC", monospace; background: #f0f3f8; color: #0046bd;
+         padding: 1px 5px; border-radius: 3px; font-size: 9.4pt; }
+  .lead { background: #f4f7fd; border-left: 3px solid #0052D9; padding: 8px 14px; border-radius: 0 4px 4px 0;
+          margin-bottom: 6px; text-indent: 0; }
+</style>
+</head>
+<body>
+  <div class="bar"></div>
+  <div class="title">「Offer捕手」学生求职匹配智能体</div>
+  <div class="subtitle">作业方案说明文档 ｜ 腾讯 AI-HR 线上实战营</div>
+  <hr class="rule">
+
+  <div class="sec">
+    <div class="sec-head"><span class="sec-num">一</span><span class="sec-title">问题诊断</span></div>
+    <p>当前高校学生在求职过程中普遍面临三类核心痛点。其一，<b>海量岗位筛选效率低</b>：招聘平台岗位动辄上万，学生缺乏快速定位匹配岗位的工具，往往在信息洪流中盲目投递，时间成本高、命中率低。其二，<b>简历与岗位匹配度不明确</b>：学生难以判断自身背景与目标岗位的契合程度，常陷入"广撒网、低回应"的困境，求职信心受挫。其三，<b>简历优化无方向</b>：多数学生不了解岗位 JD 的关键考察维度，简历表述偏过程化、缺乏量化成果，难以通过企业初筛环节。</p>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head"><span class="sec-num">二</span><span class="sec-title">方案设计</span></div>
+    <p class="lead flush">「Offer捕手」围绕"信息录入 — 智能匹配 — 优化诊断"主线，构建一站式求职辅助闭环，由四个模块协同破解上述痛点。</p>
+    <p><b>信息录入模块</b>支持简历文本粘贴与结构化表单两种方式，通过技能标签选择器、实时校验与完成度进度条降低录入门槛，沉淀出标准化的能力画像。<b>岗位智能匹配模块</b>基于能力、求职意向与工作地点等多维度加权打分，输出带匹配度百分比、匹配亮点及排序筛选的岗位推荐列表，帮助学生从海量岗位中精准锁定目标。<b>简历优化诊断模块</b>针对目标岗位生成整体匹配度评分、关键项分析与待优化点，并提供"动作＋数据＋结果"结构的可直接套用润色话术，让优化有据可依。<b>结果导出与历史记录模块</b>支持报告一键导出与本地留存，便于学生复盘与迭代。</p>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head"><span class="sec-num">三</span><span class="sec-title">技术选型</span></div>
+    <p>前端采用 <b>HTML + Tailwind CSS + 原生 JavaScript</b> 的单页应用架构，以模拟数据实现全部功能，无复杂后端依赖。选型理由有三：Tailwind 原子化样式便于快速落地腾讯系简约商务风与统一的设计语言；原生 JavaScript 零构建依赖、加载轻量、可维护性强；单文件结构便于演示与二次修改。</p>
+    <p>在部署适配上，项目为纯静态资源，可直接在<b>腾讯云 Cloud Studio</b> 中打开，借助内置静态服务器（如 <code>python -m http.server</code> 或 Live Server 插件）一键启动，再经平台端口转发生成公网预览链接即时访问，无需配置数据库与服务端环境，部署成本极低、上手即用。</p>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head"><span class="sec-num">四</span><span class="sec-title">效果评估</span></div>
+    <p>该智能体从效率与精准度两个层面提升学生求职表现。在<b>求职效率</b>上，多维匹配与排序筛选将原本耗时的人工岗位检索压缩为秒级推荐，显著减少盲目投递；在<b>简历初筛命中率</b>上，诊断模块帮助学生对齐岗位高频关键词、补强可量化成果，使简历与目标岗位的匹配度评分及初筛通过率获得明显提升。整体而言，「Offer捕手」将分散的求职动作整合为数据驱动的标准化流程，让学生求职更高效、更具方向感。</p>
+  </div>
+</body>
+</html>

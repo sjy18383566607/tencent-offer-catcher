@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Offer捕手 · 腾讯岗位专属匹配工具</title>
+
+<!-- Tailwind CSS (CDN) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- 思源黑体 / Inter 字体 -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+
+<script>
+  // ===== Tailwind 主题：腾讯官网商务质感 =====
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          tc: {
+            50:  '#f0f5ff',
+            100: '#d9e6ff',
+            200: '#b3ccff',
+            400: '#2667e8',
+            500: '#0052D9',
+            600: '#0046bd',
+            700: '#003a9e',
+          },
+          ink: {
+            900: '#181818',
+            700: '#4e5969',
+            500: '#86909c',
+            300: '#c9cdd4',
+          },
+          bg: {
+            page: '#f5f7fa',
+            card: '#ffffff',
+          },
+        },
+        fontFamily: {
+          sans: ['"PingFang SC"', '"Microsoft YaHei"', 'Noto Sans SC', 'Inter', 'system-ui', 'sans-serif'],
+        },
+        fontSize: {
+          'display': ['2.25rem', { lineHeight: '1.25', letterSpacing: '-0.02em', fontWeight: '600' }],
+          'title':   ['1.25rem', { lineHeight: '1.4',  letterSpacing: '-0.01em', fontWeight: '600' }],
+          'body':    ['0.875rem', { lineHeight: '1.65', fontWeight: '400' }],
+          'caption': ['0.75rem',  { lineHeight: '1.5',  fontWeight: '400' }],
+        },
+        boxShadow: {
+          card: '0 1px 2px rgba(0,0,0,.03), 0 2px 8px rgba(0,0,0,.04)',
+          float: '0 4px 16px rgba(0,82,217,.12)',
+        },
+        borderRadius: {
+          DEFAULT: '4px',
+          md: '6px',
+        }
+      }
+    }
+  };
+</script>
+
+<style>
+  /* —— 腾讯官网商务质感：基础与动效 —— */
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC",Inter,system-ui,sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #c9cdd4; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #86909c; }
+
+  /* 字体层级 */
+  .text-display { font-size: 2.25rem; line-height: 1.25; letter-spacing: -0.02em; font-weight: 600; color: #181818; }
+  .text-section-title { font-size: 1.25rem; line-height: 1.4; letter-spacing: -0.01em; font-weight: 600; color: #181818; }
+  .text-body { font-size: 0.875rem; line-height: 1.65; color: #4e5969; }
+  .text-caption { font-size: 0.75rem; line-height: 1.5; color: #86909c; }
+
+  .fade-in { animation: fadeIn .45s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(8px);} to {opacity:1; transform:none;} }
+
+  .fade-up-stagger { animation: fadeUp .5s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(12px);} to {opacity:1; transform:none;} }
+
+  .loading-msg { transition: opacity .35s ease, transform .35s ease; }
+  .loading-msg.is-changing { opacity: 0; transform: translateY(4px); }
+
+  .field { transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
+  .field:focus { outline:none; border-color:#0052D9; box-shadow:0 0 0 2px rgba(0,82,217,.1); }
+
+  .btn-primary {
+    transition: background .2s ease, box-shadow .2s ease, transform .15s ease, border-color .2s ease;
+  }
+  .btn-primary:hover:not(:disabled) { background:#0046bd; box-shadow:0 4px 12px rgba(0,82,217,.22); }
+  .btn-primary:active:not(:disabled) { transform: translateY(1px); box-shadow:0 2px 6px rgba(0,82,217,.16); }
+
+  .btn-secondary {
+    transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+  }
+  .btn-secondary:hover { border-color:#b3ccff; color:#0052D9; background:#f0f5ff; }
+
+  .btn-ghost {
+    transition: background .2s ease, color .2s ease;
+  }
+  .btn-ghost:hover { background:#f0f5ff; color:#0052D9; }
+
+  .tag-chip { transition: border-color .18s ease, color .18s ease, background .18s ease; border-radius: 4px; }
+  .tag-chip:hover { border-color:#b3ccff; color:#0052D9; }
+  .tag-chip:active { transform: scale(.98); }
+
+  .tab-btn { transition: color .2s ease, border-color .25s ease; }
+
+  .job-card {
+    cursor: pointer;
+    transition: box-shadow .25s ease, border-color .25s ease;
+    border-radius: 6px;
+  }
+  .job-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.06); border-color:#d9e6ff; }
+
+  .job-detail-body { max-height: 60vh; overflow-y: auto; }
+  .job-detail-body p { white-space: pre-wrap; word-break: break-word; }
+
+  .company-logo {
+    display:flex; align-items:center; justify-content:center;
+    width:40px; height:40px; border-radius:4px;
+    font-size:13px; font-weight:600; color:#fff; flex-shrink:0;
+    letter-spacing:-0.02em;
+  }
+
+  .upload-zone {
+    border: 2px dashed #e5e8ed;
+    border-radius: 6px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    transition: border-color .2s ease, background .2s ease;
+    cursor: pointer;
+    background: #fafbfc;
+  }
+  .upload-zone:hover { border-color: #b3ccff; background: #f8faff; }
+  .upload-zone.is-dragover { border-color: #0052D9; background: #f0f5ff; }
+  .resume-preview {
+    max-height: 12rem;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: #4e5969;
+    background: #fafbfc;
+    border: 1px solid #e5e8ed;
+    border-radius: 6px;
+    padding: 0.875rem 1rem;
+  }
+
+  /* 站点主 Logo：科技风渐变 + 微光阴影 */
+  .site-logo { flex-shrink: 0; line-height: 0; }
+  .site-logo svg {
+    display: block;
+    border-radius: 4px;
+    box-shadow:
+      0 0 0 1px rgba(179,204,255,.2),
+      0 4px 14px rgba(0,82,217,.32);
+  }
+
+  .match-badge {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:2px 8px; border-radius:4px;
+    font-size:12px; font-weight:500;
+  }
+  .match-badge-high { background:#f0f5ff; color:#0052D9; border:1px solid #d9e6ff; }
+  .match-badge-mid  { background:#f5f7fa; color:#2667e8; border:1px solid #b3ccff; }
+  .match-badge-low  { background:#f5f7fa; color:#86909c; border:1px solid #e5e8ed; }
+
+  .skill-hit {
+    display:inline-flex; align-items:center; gap:3px;
+    padding:2px 8px; border-radius:4px;
+    font-size:12px; background:#f0f5ff; color:#0052D9; border:1px solid #d9e6ff;
+  }
+
+  .calc-dim { transition: opacity .3s ease, transform .3s ease; }
+
+  .ring-fg { transition: stroke-dashoffset 1.2s cubic-bezier(.22,1,.36,1); }
+  .bar-fg { transition: width .9s cubic-bezier(.22,1,.36,1); }
+
+  .skeleton {
+    background:linear-gradient(90deg,#f0f2f5 25%,#e5e8ed 37%,#f0f2f5 63%);
+    background-size:400% 100%;
+    animation: shimmer 1.4s ease infinite;
+    border-radius: 4px;
+  }
+  @keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
+
+  .spinner {
+    width:32px; height:32px;
+    border:2.5px solid #d9e6ff;
+    border-top-color:#0052D9;
+    border-radius:50%;
+    animation:spin .75s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg);} }
+
+  .step-line { transition: background .45s ease; }
+  .toast-in { animation: toastIn .28s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes toastIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+  [contenteditable][data-ph]:empty:before { content: attr(data-ph); color:#86909c; }
+
+  /* —— 布局容器（响应式内边距） —— */
+  .page-container {
+    max-width: 72rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  @media (min-width: 640px) {
+    .page-container { padding-left: 1.5rem; padding-right: 1.5rem; }
+  }
+  @media (min-width: 1024px) {
+    .page-container { padding-left: 2rem; padding-right: 2rem; }
+  }
+
+  /* —— 步骤指示器：小屏纵向排列 —— */
+  .step-indicator { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  @media (max-width: 767px) {
+    .step-indicator { flex-direction: column; align-items: stretch; }
+    .step-indicator .step-line { display: none; }
+    .step-indicator .step-item { opacity: 1 !important; }
+  }
+
+  /* —— 岗位卡片：小屏纵向布局 —— */
+  .job-card-layout { display: flex; gap: 1rem; align-items: flex-start; }
+  @media (max-width: 639px) {
+    .job-card-layout { flex-direction: column; align-items: center; text-align: center; }
+    .job-card-layout .job-card-body { width: 100%; text-align: left; }
+    .job-card-layout .job-card-header { flex-direction: column; align-items: flex-start !important; }
+    .job-card-layout .job-card-salary { align-self: flex-start; }
+  }
+
+  /* —— 筛选器：小屏双列网格 —— */
+  .filter-toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  @media (min-width: 640px) {
+    .filter-toolbar { display: flex; flex-wrap: wrap; width: auto; }
+  }
+
+  /* —— 页脚：小屏纵向排列 —— */
+  .site-footer-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  @media (min-width: 640px) {
+    .site-footer-inner {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      text-align: left;
+    }
+  }
+
+  /* —— 抽屉打开时禁止背景滚动 —— */
+  body.drawer-open { overflow: hidden; }
+
+  /* —— 岗位卡片列表：GPU 合成层，减轻动效卡顿 —— */
+  #jobList { contain: layout style; }
+  .job-card { will-change: box-shadow; }
+  .job-card.fade-up-stagger { will-change: transform, opacity; }
+
+  /* —— 无障碍：减少动效 —— */
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in, .fade-up-stagger, .spinner, .skeleton, .toast-in { animation: none !important; }
+    .ring-fg, .bar-fg, .loading-msg, .job-card { transition: none !important; }
+  }
+</style>
+</head>
+
+<body class="bg-bg-page text-ink-900 antialiased">
+
+<!-- ============ 顶部导航栏 ============ -->
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#e5e8ed]">
+  <div class="page-container h-[56px] sm:h-[60px] flex items-center justify-between">
+    <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+      <div class="site-logo" aria-hidden="true">
+        <svg class="w-9 h-9 sm:w-10 sm:h-10" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="oc-bg" x1="2" y1="2" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#001A4D"/>
+              <stop offset=".45" stop-color="#0052D9"/>
+              <stop offset="1" stop-color="#003A9E"/>
+            </linearGradient>
+            <radialGradient id="oc-glow" cx="20" cy="20" r="14" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#B3CCFF" stop-opacity=".3"/>
+              <stop offset="1" stop-color="#0052D9" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="oc-scan" x1="0" y1="20" x2="40" y2="20" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#fff" stop-opacity="0"/>
+              <stop offset=".5" stop-color="#B3CCFF" stop-opacity=".22"/>
+              <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- 深空科技底色 -->
+          <rect width="40" height="40" rx="6" fill="url(#oc-bg)"/>
+          <rect width="40" height="40" rx="6" fill="url(#oc-glow)"/>
+          <!-- 四角定位光点 -->
+          <circle cx="9" cy="9" r="1" fill="#B3CCFF" opacity=".45"/>
+          <circle cx="31" cy="9" r="1" fill="#B3CCFF" opacity=".45"/>
+          <circle cx="9" cy="31" r="1" fill="#B3CCFF" opacity=".45"/>
+          <circle cx="31" cy="31" r="1" fill="#B3CCFF" opacity=".45"/>
+          <!-- 轨道扫描弧（AI 多维匹配） -->
+          <path d="M20 6.5A13.5 13.5 0 0 1 33.5 20" stroke="#B3CCFF" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M33.5 20A13.5 13.5 0 0 1 20 33.5" stroke="#fff" stroke-width="1.1" stroke-linecap="round" opacity=".5"/>
+          <path d="M20 33.5A13.5 13.5 0 0 1 6.5 20" stroke="#fff" stroke-width=".9" stroke-linecap="round" opacity=".32"/>
+          <path d="M6.5 20A13.5 13.5 0 0 1 20 6.5" stroke="#B3CCFF" stroke-width=".7" stroke-linecap="round" opacity=".22"/>
+          <!-- 内圈数据环 -->
+          <circle cx="20" cy="20" r="9.5" stroke="#B3CCFF" stroke-width=".5" opacity=".28" stroke-dasharray="1.5 2.5"/>
+          <!-- 神经连接线 -->
+          <line x1="20" y1="20" x2="20" y2="10.5" stroke="#fff" stroke-width=".7" opacity=".38"/>
+          <line x1="20" y1="20" x2="28.2" y2="25" stroke="#fff" stroke-width=".7" opacity=".38"/>
+          <line x1="20" y1="20" x2="11.8" y2="25" stroke="#fff" stroke-width=".7" opacity=".38"/>
+          <!-- 节点 -->
+          <circle cx="20" cy="10.5" r="1.7" fill="#B3CCFF"/>
+          <circle cx="28.2" cy="25" r="1.4" fill="#fff" opacity=".85"/>
+          <circle cx="11.8" cy="25" r="1.4" fill="#fff" opacity=".85"/>
+          <!-- 六边形 AI 核心 -->
+          <path d="M20 14.8L23.7 16.9V21.1L20 23.2L16.3 21.1V16.9L20 14.8Z" fill="#fff" opacity=".96"/>
+          <circle cx="20" cy="19" r="2.2" fill="#0052D9"/>
+          <circle cx="20" cy="19" r="1" fill="#B3CCFF"/>
+          <!-- 扫描光带 -->
+          <rect x="3" y="17.5" width="34" height="5" fill="url(#oc-scan)"/>
+        </svg>
+      </div>
+      <div class="leading-tight min-w-0">
+        <div class="font-bold text-lg sm:text-xl tracking-tight text-ink-900 truncate">Offer捕手</div>
+        <div class="text-caption -mt-0.5 hidden sm:block">学生求职匹配智能体</div>
+      </div>
+    </div>
+    <nav class="hidden md:flex items-center gap-8 text-body text-ink-700">
+      <a href="#step-input" class="hover:text-tc-500 transition-colors duration-200">信息录入</a>
+      <a href="#step-match" class="hover:text-tc-500 transition-colors duration-200">岗位匹配</a>
+      <a href="#step-diag" class="hover:text-tc-500 transition-colors duration-200">简历诊断</a>
+      <button onclick="toggleHistory()" class="hover:text-tc-500 transition-colors duration-200 flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v4l3 2M21 12a9 9 0 11-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        历史记录
+      </button>
+    </nav>
+    <!-- 移动端：历史记录入口 -->
+    <button onclick="toggleHistory()" class="md:hidden text-ink-700 hover:text-tc-500 p-2 -mr-2" aria-label="打开历史记录">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 2M21 12a9 9 0 11-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ============ Hero 引导区 ============ -->
+<section class="relative overflow-hidden border-b border-[#e5e8ed]">
+  <div class="absolute inset-0 bg-gradient-to-b from-tc-50/60 to-bg-page"></div>
+  <div class="relative page-container pt-12 sm:pt-16 pb-10 sm:pb-14">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-white border border-tc-100 text-tc-600 text-caption font-medium mb-6">
+      <span class="w-1.5 h-1.5 rounded-full bg-tc-500"></span>
+      腾讯官方岗位 · 本地智能匹配
+    </div>
+    <h1 class="text-display text-[1.75rem] sm:text-[2.25rem] md:text-[2.5rem] leading-tight">
+      从腾讯海量岗位中，<span class="text-tc-500">捕获属于你的那一个</span>
+    </h1>
+    <p class="mt-5 text-body max-w-2xl">
+      读取腾讯招聘官网真实岗位数据，结合你的简历与求职意向进行多维匹配，
+      生成推荐排序、岗位详情与简历优化诊断，全部在本地完成、不上传服务器。
+    </p>
+    <p id="jobsLoadStatus" class="mt-3 text-caption text-tc-500">正在加载腾讯岗位数据…</p>
+    <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+      <a href="#step-input" class="btn-primary bg-tc-500 text-white px-7 py-3 rounded-md text-body font-medium text-center">开始匹配</a>
+      <a href="#step-diag" class="btn-secondary px-7 py-3 rounded-md text-body font-medium text-ink-700 bg-white border border-[#e5e8ed] text-center">体验简历诊断</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 步骤指示器 ============ -->
+<div class="page-container mt-4 sm:mt-6">
+  <div class="bg-white rounded-md shadow-card border border-[#e5e8ed] px-4 sm:px-8 py-4 sm:py-5 step-indicator text-body">
+    <div id="ind-1" class="step-item flex items-center gap-2.5 sm:gap-3 flex-1">
+      <span class="step-dot w-7 h-7 rounded bg-tc-500 text-white flex items-center justify-center text-caption font-semibold shrink-0">1</span>
+      <span class="font-medium text-ink-900 text-sm sm:text-base">录入求职信息</span>
+    </div>
+    <div class="step-line h-px w-12 sm:w-20 bg-[#e5e8ed] mx-2 sm:mx-3 shrink-0"></div>
+    <div id="ind-2" class="step-item flex items-center gap-2.5 sm:gap-3 flex-1 opacity-50">
+      <span class="step-dot w-7 h-7 rounded bg-[#e5e8ed] text-ink-500 flex items-center justify-center text-caption font-semibold shrink-0">2</span>
+      <span class="font-medium text-ink-900 text-sm sm:text-base">岗位智能匹配</span>
+    </div>
+    <div class="step-line h-px w-12 sm:w-20 bg-[#e5e8ed] mx-2 sm:mx-3 shrink-0"></div>
+    <div id="ind-3" class="step-item flex items-center gap-2.5 sm:gap-3 flex-1 opacity-50">
+      <span class="step-dot w-7 h-7 rounded bg-[#e5e8ed] text-ink-500 flex items-center justify-center text-caption font-semibold shrink-0">3</span>
+      <span class="font-medium text-ink-900 text-sm sm:text-base">简历优化诊断</span>
+    </div>
+  </div>
+</div>
+
+<main class="page-container py-10 sm:py-14 space-y-12 sm:space-y-16">
+
+  <!-- ============ 模块一：信息录入 ============ -->
+  <section id="step-input" class="scroll-mt-24">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-section-title">① 录入你的求职信息</h2>
+        <p class="text-caption mt-2">支持结构化表单填写或上传简历文件，两种方式任选其一。</p>
+      </div>
+      <div class="w-full sm:w-52 shrink-0">
+        <div class="flex justify-between text-caption mb-1.5">
+          <span>信息完成度</span><span id="completePct">0%</span>
+        </div>
+        <div class="h-1.5 bg-[#f0f2f5] rounded overflow-hidden">
+          <div id="completeBar" class="bar-fg h-full bg-tc-500 rounded" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-md shadow-card border border-[#e5e8ed] overflow-hidden">
+      <div class="flex border-b border-[#e5e8ed] px-1 sm:px-3 overflow-x-auto">
+        <button onclick="switchTab('form')" id="tab-form" class="tab-btn px-4 sm:px-6 py-3.5 sm:py-4 text-body font-medium border-b-2 border-tc-500 text-tc-500 whitespace-nowrap">结构化表单填写</button>
+        <button onclick="switchTab('upload')" id="tab-upload" class="tab-btn px-4 sm:px-6 py-3.5 sm:py-4 text-body font-medium border-b-2 border-transparent text-ink-500 hover:text-ink-700 whitespace-nowrap">简历文件上传</button>
+      </div>
+
+      <div id="pane-form" class="p-5 sm:p-8">
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-body font-medium text-ink-900 mb-2">教育背景 <span class="text-tc-500">*</span></label>
+            <input id="f-edu" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body" placeholder="如：深圳大学 · 计算机科学与技术 · 本科" />
+            <p class="err text-caption text-tc-600 mt-1.5 hidden">请填写教育背景</p>
+          </div>
+          <div>
+            <label class="block text-body font-medium text-ink-900 mb-2">求职意向（目标岗位）<span class="text-tc-500">*</span></label>
+            <input id="f-intent" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body" placeholder="如：后端开发工程师" />
+            <p class="err text-caption text-tc-600 mt-1.5 hidden">请填写求职意向</p>
+          </div>
+        </div>
+
+        <div class="mt-7">
+          <label class="block text-body font-medium text-ink-900 mb-3">技能标签 <span class="text-ink-300 font-normal">（点击添加，可多选）</span></label>
+          <div id="skillPool" class="space-y-1 mb-3"></div>
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            <input id="skillInput" onkeydown="if(event.key==='Enter'){addCustomSkill();event.preventDefault();}" class="field flex-1 rounded border border-[#e5e8ed] px-4 py-2.5 text-body" placeholder="输入自定义技能后回车添加，如 LangChain、RAG" />
+            <button onclick="addCustomSkill()" class="btn-ghost px-5 py-2.5 rounded text-body font-medium text-tc-500 bg-tc-50 border border-tc-100 shrink-0">添加</button>
+          </div>
+          <div id="skillChosen" class="flex flex-wrap gap-2.5 mt-4"></div>
+        </div>
+
+        <div class="mt-7">
+          <label class="block text-body font-medium text-ink-900 mb-2">项目经历</label>
+          <textarea id="f-proj" rows="3" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body resize-none" placeholder="简述 1-2 段项目经历：你做了什么、用了什么技术、取得什么结果"></textarea>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 mt-7">
+          <div>
+            <label class="block text-body font-medium text-ink-900 mb-2">实习经历</label>
+            <textarea id="f-intern" rows="3" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body resize-none" placeholder="公司 · 岗位 · 时间：负责什么、用了什么技术、取得什么成果"></textarea>
+            <p class="text-caption mt-1.5">校招/实习岗建议填写，有实习经历匹配度更高</p>
+          </div>
+          <div>
+            <label class="block text-body font-medium text-ink-900 mb-2">作品集</label>
+            <textarea id="f-portfolio" rows="3" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body resize-none" placeholder="GitHub / 博客 / Behance / 个人站点链接，附 1-2 句核心作品说明"></textarea>
+            <p class="text-caption mt-1.5">技术/设计/产品岗可附链接，便于 HR 快速了解能力</p>
+          </div>
+        </div>
+
+        <div class="mt-7">
+          <label class="block text-body font-medium text-ink-900 mb-2">获奖信息</label>
+          <textarea id="f-awards" rows="2" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body resize-none" placeholder="如：ACM-ICPC 区域赛银奖、数学建模省一等奖、国家奖学金、腾讯犀牛鸟计划优秀学员……"></textarea>
+          <p class="text-caption mt-1.5">竞赛获奖、奖学金、荣誉称号等，校招简历的重要加分项</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 mt-7">
+          <div>
+            <label class="block text-body font-medium text-ink-900 mb-2">期望城市</label>
+            <select id="f-city" onchange="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white">
+              <option value="">请选择</option>
+              <option>深圳</option><option>广州</option><option>北京</option>
+              <option>上海</option><option>杭州</option><option>成都</option><option>不限</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-body font-medium text-ink-900 mb-2">岗位类型</label>
+            <select id="f-type" onchange="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white">
+              <option value="">请选择</option>
+              <option>技术研发</option><option>产品</option><option>设计</option>
+              <option>数据分析</option><option>运营</option><option>市场</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="pane-upload" class="p-5 sm:p-8 hidden">
+        <label class="block text-body font-medium text-ink-900 mb-3">上传简历文件</label>
+        <div id="uploadZone" class="upload-zone" onclick="document.getElementById('resumeFile').click()" role="button" tabindex="0" aria-label="上传简历文件">
+          <svg class="mx-auto mb-3 text-tc-500" width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 16V4m0 0L8 8m4-4 4 4M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="text-body text-ink-900 font-medium">拖拽文件到此处，或点击选择</p>
+          <p class="text-caption mt-2">支持 .txt · .pdf · .docx，最大 5MB，仅在本地解析不上传</p>
+          <input type="file" id="resumeFile" accept=".txt,.md,.pdf,.docx" class="hidden" onchange="onResumeFileSelect(event)" />
+        </div>
+        <p id="uploadStatus" class="text-caption text-tc-500 mt-3 hidden"></p>
+        <div id="uploadResult" class="hidden mt-5">
+          <div class="flex items-center justify-between gap-3 mb-3">
+            <div class="min-w-0 flex items-center gap-2">
+              <span class="text-caption px-2 py-0.5 rounded bg-tc-50 text-tc-500 border border-tc-100 shrink-0">已解析</span>
+              <span id="uploadFileName" class="text-body font-medium text-ink-900 truncate"></span>
+            </div>
+            <button type="button" onclick="clearResumeFile()" class="text-caption text-ink-500 hover:text-tc-500 shrink-0">重新上传</button>
+          </div>
+          <p class="text-caption text-ink-500 mb-2">解析预览（节选）</p>
+          <div id="resumePreview" class="resume-preview"></div>
+          <div class="flex items-center justify-between mt-3">
+            <span id="resumeHint" class="text-caption">建议简历内容 50 字以上，信息越完整匹配越精准</span>
+            <span id="resumeCount" class="text-caption text-ink-300">0 字</span>
+          </div>
+        </div>
+        <textarea id="resumeText" class="hidden" aria-hidden="true"></textarea>
+      </div>
+
+      <div class="px-5 sm:px-8 py-4 sm:py-5 bg-[#fafbfc] border-t border-[#e5e8ed] flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <span class="text-caption text-center sm:text-left">数据仅在本地处理，不会上传服务器</span>
+        <button id="matchBtn" onclick="startMatch()" class="btn-primary bg-tc-500 text-white px-8 py-3 rounded-md text-body font-medium disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto">
+          开始智能匹配
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 模块二：岗位智能匹配 ============ -->
+  <section id="step-match" class="scroll-mt-24 hidden">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-section-title">② 为你匹配到的岗位</h2>
+        <p class="text-caption mt-2">基于你的能力与意向，按匹配度智能排序。</p>
+      </div>
+      <div class="filter-toolbar text-body w-full lg:w-auto">
+        <select id="filterCategory" onchange="renderJobs()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white w-full sm:w-auto">
+          <option value="">全部类别</option>
+        </select>
+        <select id="filterLocation" onchange="renderJobs()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white w-full sm:w-auto">
+          <option value="">全部城市</option>
+        </select>
+        <select id="filterSource" onchange="renderJobs()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white w-full sm:w-auto">
+          <option value="">校招+社招</option>
+          <option value="campus">校招</option>
+          <option value="social">社招</option>
+        </select>
+        <select id="sortBy" onchange="renderJobs()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white w-full sm:w-auto">
+          <option value="match">按匹配度排序</option>
+          <option value="title">按岗位名称排序</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="matchLoading" class="hidden">
+      <div class="bg-white rounded-md shadow-card border border-[#e5e8ed] py-16 flex flex-col items-center">
+        <div class="spinner mb-5"></div>
+        <p id="loadingMsg" class="loading-msg text-body text-ink-900 font-medium">正在解析你的能力画像…</p>
+        <div class="w-full max-w-xs sm:w-72 h-1.5 bg-[#f0f2f5] rounded overflow-hidden mt-5">
+          <div id="loadBar" class="bar-fg h-full bg-tc-500 rounded" style="width:0%"></div>
+        </div>
+        <!-- 匹配度动态计算面板 -->
+        <div id="scoreCalcPanel" class="hidden mt-6 sm:mt-8 w-full max-w-md px-4 sm:px-8 min-h-[140px]">
+          <p class="text-caption text-center mb-4">多维匹配度实时计算</p>
+          <div id="scoreCalcDims" class="space-y-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 匹配结果摘要 -->
+    <div id="matchSummary" class="hidden mb-5 bg-white rounded-md shadow-card border border-[#e5e8ed] px-4 sm:px-6 py-4 flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4">
+      <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+        <div class="text-caption">本次匹配</div>
+        <div class="text-body"><span id="matchCount" class="font-semibold text-tc-500">0</span> 条推荐（Top 200）</div>
+        <div class="h-4 w-px bg-[#e5e8ed] hidden sm:block"></div>
+        <div class="text-body">最高匹配度 <span id="topScore" class="font-semibold text-tc-500" data-suffix="%">0</span></div>
+      </div>
+      <div id="topSkills" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <div id="jobList" class="grid gap-5"></div>
+  </section>
+
+  <!-- ============ 模块三：简历优化诊断 ============ -->
+  <section id="step-diag" class="scroll-mt-24">
+    <div class="mb-6">
+      <h2 class="text-section-title">③ 简历优化诊断</h2>
+      <p class="text-caption mt-2">输入目标岗位，生成简历匹配度报告与可直接套用的优化话术。</p>
+    </div>
+
+    <div class="bg-white rounded-md shadow-card border border-[#e5e8ed] p-5 sm:p-8">
+      <div class="flex flex-col sm:flex-row gap-4">
+        <input id="diagJob" oninput="debounceSaveProfile()" class="field flex-1 rounded border border-[#e5e8ed] px-4 py-3 text-body" placeholder="输入目标岗位，如：腾讯 · 后端开发工程师" />
+        <button onclick="startDiag()" id="diagBtn" class="btn-primary bg-tc-500 text-white px-8 py-3 rounded-md text-body font-medium whitespace-nowrap">生成诊断报告</button>
+      </div>
+      <p class="text-caption mt-3">提示：诊断将结合你在上方录入的简历信息进行分析。</p>
+    </div>
+
+    <div id="diagLoading" class="hidden mt-6 bg-white rounded-md shadow-card border border-[#e5e8ed] p-8 space-y-4">
+      <div class="skeleton h-5 w-1/3"></div>
+      <div class="skeleton h-24 w-full"></div>
+      <div class="skeleton h-4 w-2/3"></div>
+    </div>
+
+    <div id="diagReport" class="hidden mt-6"></div>
+  </section>
+
+</main>
+
+<!-- ============ 历史记录抽屉 ============ -->
+<div id="historyMask" onclick="toggleHistory()" class="fixed inset-0 bg-black/25 z-50 hidden opacity-0 transition-opacity duration-300"></div>
+<aside id="historyPanel" class="fixed top-0 right-0 h-full w-full sm:w-80 max-w-full bg-white z-50 shadow-float translate-x-full transition-transform duration-300 ease-out flex flex-col">
+  <div class="flex items-center justify-between px-6 h-[60px] border-b border-[#e5e8ed]">
+    <h3 class="font-semibold text-[15px] text-ink-900">历史记录</h3>
+    <button onclick="toggleHistory()" class="text-ink-500 hover:text-ink-900 transition-colors duration-200">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div id="historyList" class="flex-1 overflow-y-auto p-5 space-y-4 text-body"></div>
+  <div class="p-5 border-t border-[#e5e8ed]">
+    <button onclick="clearHistory()" class="btn-secondary w-full py-2.5 rounded text-body text-ink-700 bg-[#fafbfc] border border-[#e5e8ed]">清空历史记录</button>
+  </div>
+</aside>
+
+<!-- ============ 岗位详情弹层 ============ -->
+<div id="jobDetailMask" onclick="closeJobDetail()" class="fixed inset-0 bg-black/30 z-[55] hidden opacity-0 transition-opacity duration-300"></div>
+<aside id="jobDetailPanel" class="fixed top-0 right-0 h-full w-full sm:w-[520px] max-w-full bg-white z-[56] shadow-float translate-x-full transition-transform duration-300 ease-out flex flex-col">
+  <div class="flex items-start justify-between px-5 sm:px-6 py-5 border-b border-[#e5e8ed] gap-4">
+    <div class="min-w-0">
+      <p class="text-caption">岗位详情</p>
+      <h3 id="jdTitle" class="font-semibold text-body text-ink-900 mt-1 break-words"></h3>
+      <p id="jdDept" class="text-caption mt-1 break-words"></p>
+    </div>
+    <button onclick="closeJobDetail()" class="text-ink-500 hover:text-ink-900 transition-colors shrink-0 p-1" aria-label="关闭">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="job-detail-body flex-1 overflow-y-auto px-5 sm:px-6 py-5 space-y-5 text-body">
+    <div class="flex flex-wrap gap-2" id="jdMeta"></div>
+    <div>
+      <h4 class="font-semibold text-ink-900 mb-2">岗位职责</h4>
+      <p id="jdResp" class="text-ink-700 leading-relaxed"></p>
+    </div>
+    <div>
+      <h4 class="font-semibold text-ink-900 mb-2">任职要求</h4>
+      <p id="jdReq" class="text-ink-700 leading-relaxed"></p>
+    </div>
+    <div id="jdTags" class="flex flex-wrap gap-2"></div>
+  </div>
+  <div class="p-5 border-t border-[#e5e8ed] flex flex-col sm:flex-row gap-3">
+    <a id="jdLink" href="#" target="_blank" rel="noopener" class="btn-secondary flex-1 py-2.5 rounded text-body text-tc-500 bg-white border border-tc-200 text-center">前往官网投递</a>
+    <button id="jdDiagBtn" class="btn-primary flex-1 py-2.5 rounded text-body text-white bg-tc-500">诊断我的简历</button>
+  </div>
+</aside>
+
+<!-- ============ 页脚 ============ -->
+<footer class="border-t border-[#e5e8ed] bg-white mt-16">
+  <div class="page-container py-6 sm:py-8 text-caption site-footer-inner">
+    <span>Offer捕手 · 腾讯岗位专属匹配工具</span>
+    <span>岗位数据来源于腾讯招聘官网（join.qq.com / careers.tencent.com），匹配分析仅在本地完成</span>
+    <span id="footerJobCount" class="text-ink-300"></span>
+  </div>
+</footer>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 sm:bottom-8 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-[60] hidden flex justify-center">
+  <div class="bg-ink-900 text-white text-body px-5 py-3 rounded-md shadow-float toast-in flex items-center gap-2.5 max-w-sm w-full sm:w-auto justify-center">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#b3ccff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span id="toastMsg">已复制</span>
+  </div>
+</div>
+
+<!-- 简历解析：PDF / Word（仅本地读取） -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+<script>
+/* =========================================================================
+   Offer捕手 · 腾讯岗位专属匹配（读取本地 tencent_jobs.json）
+   ========================================================================= */
+
+/* ---------- 本地存储 Key ---------- */
+const SKEY = 'offercatcher_profile';
+const MKEY = 'offercatcher_matches';
+const HKEY = 'offercatcher_history';
+
+/* ---------- 1. 状态与岗位数据 ---------- */
+/** 技能标签分组（含近年热门 AI 工具） */
+const SKILL_GROUPS = [
+  { label:'开发基础', skills:['Java','Python','Go','JavaScript','TypeScript','C++','React','Vue','Node.js','MySQL','Redis','Linux','Docker','Kubernetes'] },
+  { label:'AI & 大模型', skills:['机器学习','深度学习','算法','NLP','CV','PyTorch','TensorFlow','大模型','LLM','RAG','Agent','Prompt工程','LangChain','AIGC','Transformer'] },
+  { label:'AI 工具', skills:['ChatGPT','Claude','Copilot','Cursor','Gemini','Midjourney','Stable Diffusion','ComfyUI','DALL·E','Runway','Sora','Coze','文心一言','通义千问'] },
+  { label:'数据 & 产品', skills:['数据分析','SQL','Spark','Figma','产品设计','UI/UX','项目管理','沟通协作'] },
+];
+const PRESET_SKILLS = SKILL_GROUPS.flatMap(g=> g.skills);
+const JD_KEYWORDS = ['高并发','微服务','分布式','性能优化','架构设计','推荐系统','A/B测试','数据建模','用户增长','云原生','接口设计','业务洞察','组件化','深度学习','NLP','大模型','LLM','RAG','AIGC','Agent','Prompt工程'];
+const COMPANY_LOGOS = { '腾讯': { abbr:'腾', color:'#0052D9' }, '腾讯云': { abbr:'云', color:'#0052D9' } };
+
+let JOB_DB = [];
+let jobsMeta = {};
+let jobsReady = false;
+let chosenSkills = new Set();
+let matchedJobs = [];
+let userProfile = {};
+let lastDiagData = null;
+let isRestoring = false;
+let matchStepTimer = null;
+let resumeFileName = '';
+const MAX_RESUME_MB = 5;
+
+/** 从城市名提取核心城市（如「深圳总部」→「深圳」） */
+function normalizeCity(c){
+  if(!c) return '';
+  const s = String(c).replace(/总部|市/g,'').trim();
+  const core = ['深圳','广州','北京','上海','杭州','成都','西安','合肥','青岛','中国香港','香港'];
+  return core.find(k=> s.includes(k)) || s;
+}
+
+/** 表单岗位类型 → 腾讯招聘类别 */
+function mapFormTypeToCategory(t){
+  const m = { '技术研发':'技术', '产品':'产品', '设计':'设计', '数据分析':'技术', '运营':'市场', '市场':'市场' };
+  return m[t] || t;
+}
+
+/** 从文本提取技能标签 */
+function extractTagsFromText(text){
+  if(!text) return [];
+  const lower = text.toLowerCase();
+  const found = PRESET_SKILLS.filter(s=> lower.includes(s.toLowerCase()) || text.includes(s));
+  return [...new Set(found)].slice(0, 12);
+}
+
+/** 从任职要求提取 JD 关键词 */
+function extractJdKeywords(text){
+  if(!text) return [];
+  const found = JD_KEYWORDS.filter(k=> text.includes(k));
+  return [...new Set(found)].slice(0, 8);
+}
+
+/** 从简历文本推断学历 */
+function extractEdu(raw){
+  if(/博士|Ph\.?D/i.test(raw)) return '博士';
+  if(/硕士|研究生|Master/i.test(raw)) return '硕士';
+  if(/本科|学士|Bachelor/i.test(raw)) return '本科';
+  if(/大专|专科/i.test(raw)) return '大专';
+  return '';
+}
+
+/** 将爬虫 JSON 映射为前端统一结构（轻量加载，详细字段在匹配时懒计算） */
+function mapJobLite(raw){
+  const resp = raw.responsibility || '';
+  return {
+    ...raw,
+    company: raw.department || '腾讯',
+    city: raw.location || '不限',
+    type: raw.category || '其他',
+    tags: raw.tags || [],
+    jdKeywords: [],
+    desc: raw.desc || (resp ? resp.slice(0, 120) + (resp.length > 120 ? '…' : '') : ''),
+  };
+}
+
+/** 匹配前补全岗位标签与 JD 关键词（懒计算，避免首屏加载卡顿） */
+function ensureJobFields(job){
+  if(job._norm) return job;
+  const req = job.requirement || '';
+  const resp = job.responsibility || '';
+  if(!job.tags?.length) job.tags = extractTagsFromText(req + ' ' + job.title + ' ' + resp);
+  if(!job.jdKeywords?.length) job.jdKeywords = extractJdKeywords(req + ' ' + resp);
+  job._norm = true;
+  return job;
+}
+
+/** 加载本地 tencent_jobs.json */
+async function loadJobs(){
+  const statusEl = document.getElementById('jobsLoadStatus');
+  const footerEl = document.getElementById('footerJobCount');
+  try{
+    const res = await fetch('./tencent_jobs.json', { cache: 'no-cache' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    jobsMeta = data.meta || {};
+    // 轻量映射：3042 条岗位不做全量关键词提取，显著缩短首屏等待
+    JOB_DB = (data.jobs || []).map(mapJobLite);
+    jobsReady = JOB_DB.length > 0;
+    populateFilters();
+    const scraped = jobsMeta.scraped_at ? ` · 更新于 ${jobsMeta.scraped_at}` : '';
+    const src = jobsMeta.campus_count != null
+      ? `（校招 ${jobsMeta.campus_count || 0} + 社招 ${jobsMeta.social_count || 0}）`
+      : '';
+    const msg = `已加载 ${JOB_DB.length} 个腾讯官方岗位${src}${scraped}`;
+    if(statusEl) statusEl.textContent = msg;
+    if(footerEl) footerEl.textContent = `${JOB_DB.length} 条岗位`;
+    recalcForm();
+  }catch(e){
+    jobsReady = false;
+    const err = '岗位数据加载失败，请先运行 scrape_tencent_jobs.py 生成 tencent_jobs.json';
+    if(statusEl) statusEl.textContent = err;
+    toast(err);
+    document.getElementById('matchBtn').disabled = true;
+  }
+}
+
+/** 根据岗位数据动态填充筛选器（安全 DOM 创建，防 XSS） */
+function populateFilters(){
+  const catSel = document.getElementById('filterCategory');
+  const locSel = document.getElementById('filterLocation');
+  if(!catSel || !locSel) return;
+  const cats = [...new Set(JOB_DB.map(j=> j.type).filter(Boolean))].sort();
+  const locs = [...new Set(JOB_DB.map(j=> normalizeCity(j.city)).filter(Boolean))].sort();
+  const keepCat = catSel.value, keepLoc = locSel.value;
+  const fillSelect = (sel, items, placeholder)=>{
+    sel.innerHTML = '';
+    const opt0 = document.createElement('option');
+    opt0.value = ''; opt0.textContent = placeholder;
+    sel.appendChild(opt0);
+    items.forEach(v=>{
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+  };
+  fillSelect(catSel, cats, '全部类别');
+  fillSelect(locSel, locs, '全部城市');
+  if(cats.includes(keepCat)) catSel.value = keepCat;
+  if(locs.includes(keepLoc)) locSel.value = keepLoc;
+}
+
+/* ---------- 工具函数 ---------- */
+function val(id){ return (document.getElementById(id).value||'').trim(); }
+
+/** 安全转义，防止 innerHTML 注入 */
+function escapeHtml(str){
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setBar(barId, pctId, pct){
+  const bar = document.getElementById(barId);
+  if(bar) bar.style.width = pct+'%';
+  const pctEl = document.getElementById(pctId);
+  if(pctEl) pctEl.textContent = pct+'%';
+}
+function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+
+/** 从公司名生成 Logo 占位 HTML */
+function companyLogoHtml(company){
+  const brand = company.split('·')[0].trim();
+  const cfg = COMPANY_LOGOS[brand] || { abbr: brand.slice(0,1), color:'#2667e8' };
+  return `<div class="company-logo" style="background:${cfg.color}" title="${escapeHtml(brand)}">${escapeHtml(cfg.abbr)}</div>`;
+}
+
+/** 匹配度等级标签 */
+function matchLevelBadge(score){
+  if(score>=82) return '<span class="match-badge match-badge-high">高度匹配</span>';
+  if(score>=68) return '<span class="match-badge match-badge-mid">良好匹配</span>';
+  return '<span class="match-badge match-badge-low">一般匹配</span>';
+}
+
+/** 防抖自动保存（恢复数据时不触发） */
+let saveTimer;
+function debounceSaveProfile(){
+  if(isRestoring) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveProfile, 400);
+}
+
+/* ---------- 2. 信息录入 ---------- */
+
+// Tab 切换（默认：结构化表单）
+function switchTab(name){
+  const isForm = name === 'form';
+  document.getElementById('pane-form').classList.toggle('hidden', !isForm);
+  document.getElementById('pane-upload').classList.toggle('hidden', isForm);
+  toggleActive('tab-form', isForm);
+  toggleActive('tab-upload', !isForm);
+  recalcForm();
+  saveProfile();
+}
+function toggleActive(id, active){
+  const el = document.getElementById(id);
+  el.classList.toggle('border-tc-500', active);
+  el.classList.toggle('text-tc-500', active);
+  el.classList.toggle('border-transparent', !active);
+  el.classList.toggle('text-ink-500', !active);
+}
+
+// 渲染技能标签池（按分组展示）
+function renderSkillPool(){
+  const pool = document.getElementById('skillPool');
+  pool.innerHTML = '';
+  SKILL_GROUPS.forEach(group=>{
+    const avail = group.skills.filter(s=> !chosenSkills.has(s));
+    if(!avail.length) return;
+    const section = document.createElement('div');
+    section.className = 'skill-group mb-3 last:mb-0';
+    const label = document.createElement('p');
+    label.className = 'text-caption text-ink-500 mb-2';
+    label.textContent = group.label;
+    section.appendChild(label);
+    const chips = document.createElement('div');
+    chips.className = 'flex flex-wrap gap-2.5';
+    avail.forEach(s=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tag-chip text-caption px-3 py-1.5 rounded border border-[#e5e8ed] text-ink-700 bg-white';
+      b.textContent = '+ ' + s;
+      b.onclick = ()=>{ chosenSkills.add(s); renderSkillPool(); renderChosen(); recalcForm(); saveProfile(); };
+      chips.appendChild(b);
+    });
+    section.appendChild(chips);
+    pool.appendChild(section);
+  });
+  if(!pool.children.length){
+    pool.innerHTML = '<p class="text-caption text-ink-500">已添加全部预设技能，可在下方输入自定义标签</p>';
+  }
+}
+function renderChosen(){
+  const box = document.getElementById('skillChosen');
+  box.innerHTML = '';
+  chosenSkills.forEach(s=>{
+    const chip = document.createElement('span');
+    chip.className = 'tag-chip inline-flex items-center gap-1.5 text-caption px-3 py-1.5 rounded bg-tc-50 text-tc-500 border border-tc-100';
+    chip.innerHTML = `${s} <span class="cursor-pointer hover:text-tc-700">✕</span>`;
+    chip.querySelector('span').onclick = ()=>{ chosenSkills.delete(s); renderSkillPool(); renderChosen(); recalcForm(); saveProfile(); };
+    box.appendChild(chip);
+  });
+}
+function addCustomSkill(){
+  const inp = document.getElementById('skillInput');
+  const v = inp.value.trim();
+  if(v){ chosenSkills.add(v); inp.value=''; renderSkillPool(); renderChosen(); recalcForm(); saveProfile(); }
+}
+
+// 简历文件上传与解析
+function initUploadZone(){
+  const zone = document.getElementById('uploadZone');
+  if(!zone) return;
+  ['dragenter','dragover'].forEach(ev=>{
+    zone.addEventListener(ev, e=>{ e.preventDefault(); zone.classList.add('is-dragover'); });
+  });
+  ['dragleave','drop'].forEach(ev=>{
+    zone.addEventListener(ev, e=>{ e.preventDefault(); zone.classList.remove('is-dragover'); });
+  });
+  zone.addEventListener('drop', e=>{
+    const file = e.dataTransfer?.files?.[0];
+    if(file) processResumeFile(file);
+  });
+  zone.addEventListener('keydown', e=>{
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); document.getElementById('resumeFile').click(); }
+  });
+}
+
+function onResumeFileSelect(e){
+  const file = e.target.files?.[0];
+  if(file) processResumeFile(file);
+}
+
+function setUploadStatus(msg, show){
+  const el = document.getElementById('uploadStatus');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.classList.toggle('hidden', !show);
+}
+
+function updateUploadPreview(){
+  const text = val('resumeText');
+  const preview = document.getElementById('resumePreview');
+  const result = document.getElementById('uploadResult');
+  if(!preview || !result) return;
+  if(text.length){
+    result.classList.remove('hidden');
+    preview.textContent = text.length > 600 ? text.slice(0, 600) + '\n…' : text;
+    if(resumeFileName) document.getElementById('uploadFileName').textContent = resumeFileName;
+  }else{
+    result.classList.add('hidden');
+    preview.textContent = '';
+  }
+}
+
+async function processResumeFile(file){
+  if(file.size > MAX_RESUME_MB * 1024 * 1024){
+    toast(`文件不能超过 ${MAX_RESUME_MB}MB`);
+    return;
+  }
+  setUploadStatus('正在解析简历，请稍候…', true);
+  try{
+    const text = await parseResumeFile(file);
+    const cleaned = text.replace(/\u0000/g,'').trim();
+    if(cleaned.length < 10) throw new Error('未能从文件中提取有效文字，请换用 .txt 或检查 PDF 是否为扫描件');
+    document.getElementById('resumeText').value = cleaned;
+    resumeFileName = file.name;
+    updateUploadPreview();
+    onResumeInput();
+    saveProfile();
+    setUploadStatus('', false);
+    toast('简历解析成功');
+  }catch(err){
+    setUploadStatus('', false);
+    toast(err.message || '简历解析失败');
+  }
+}
+
+/** 按扩展名解析简历文件为纯文本 */
+async function parseResumeFile(file){
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if(['txt','md'].includes(ext)) return await file.text();
+  if(ext === 'pdf') return await extractPdfText(file);
+  if(ext === 'docx') return await extractDocxText(file);
+  throw new Error('暂不支持该格式，请上传 .txt / .pdf / .docx');
+}
+
+async function extractPdfText(file){
+  if(typeof pdfjsLib === 'undefined') throw new Error('PDF 解析库未加载，请检查网络后刷新');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const parts = [];
+  for(let i = 1; i <= pdf.numPages; i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    parts.push(content.items.map(it=> it.str).join(' '));
+  }
+  return parts.join('\n');
+}
+
+async function extractDocxText(file){
+  if(typeof mammoth === 'undefined') throw new Error('Word 解析库未加载，请检查网络后刷新');
+  const buf = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer: buf });
+  return result.value || '';
+}
+
+function clearResumeFile(){
+  resumeFileName = '';
+  document.getElementById('resumeText').value = '';
+  const input = document.getElementById('resumeFile');
+  if(input) input.value = '';
+  updateUploadPreview();
+  onResumeInput();
+  saveProfile();
+}
+
+// 简历上传解析结果更新
+function onResumeInput(){
+  const t = document.getElementById('resumeText').value;
+  document.getElementById('resumeCount').textContent = t.length + ' 字';
+  const hint = document.getElementById('resumeHint');
+  if(t.length>0 && t.length<50){ hint.textContent='内容偏少，建议补充技能与项目经历'; hint.className='text-caption text-ink-700'; }
+  else if(t.length>=50){ hint.textContent='信息完整度良好 ✓'; hint.className='text-caption text-tc-500'; }
+  else { hint.textContent='建议简历内容 50 字以上，信息越完整匹配越精准'; hint.className='text-caption'; }
+  updateUploadPreview();
+  recalcForm();
+  debounceSaveProfile();
+}
+
+// 是否使用表单 Tab
+function isFormMode(){ return !document.getElementById('pane-form').classList.contains('hidden'); }
+
+// 实时校验 + 完成度计算
+function recalcForm(){
+  let pct = 0, ready = false;
+  if(isFormMode()){
+    const edu = val('f-edu'), intent = val('f-intent'), proj = val('f-proj'),
+          intern = val('f-intern'), portfolio = val('f-portfolio'), awards = val('f-awards'),
+          city = val('f-city'), type = val('f-type');
+    const items = [edu, intent, chosenSkills.size>0?'1':'', proj, intern, portfolio, awards, city, type];
+    pct = Math.round(items.filter(Boolean).length / items.length * 100);
+    ready = !!edu && !!intent;       // 必填项
+  } else {
+    const len = val('resumeText').length;
+    pct = Math.min(100, Math.round(len / 120 * 100));
+    ready = len >= 20;
+  }
+  setBar('completeBar','completePct',pct);
+  document.getElementById('matchBtn').disabled = !ready || !jobsReady;
+  debounceSaveProfile();
+}
+
+/* ---------- 本地存储：用户信息与匹配结果 ---------- */
+
+/** 保存用户填写的全部信息到 localStorage */
+function saveProfile(){
+  if(isRestoring) return;
+  const data = {
+    activeTab: isFormMode() ? 'form' : 'upload',
+    resumeText: val('resumeText'),
+    resumeFileName,
+    form: {
+      edu: val('f-edu'), intent: val('f-intent'), proj: val('f-proj'),
+      intern: val('f-intern'), portfolio: val('f-portfolio'), awards: val('f-awards'),
+      city: val('f-city'), type: val('f-type'),
+    },
+    skills: [...chosenSkills],
+    diagJob: val('diagJob'),
+    savedAt: new Date().toISOString(),
+  };
+  try{ localStorage.setItem(SKEY, JSON.stringify(data)); }catch(e){}
+}
+
+/** 从 localStorage 恢复用户填写的信息 */
+function loadProfile(){
+  try{
+    const raw = localStorage.getItem(SKEY);
+    if(!raw) return;
+    isRestoring = true;
+    const data = JSON.parse(raw);
+
+    if(data.resumeText != null) document.getElementById('resumeText').value = data.resumeText || '';
+    if(data.resumeFileName) resumeFileName = data.resumeFileName;
+    updateUploadPreview();
+    if(data.form){
+      const f = data.form;
+      document.getElementById('f-edu').value = f.edu || '';
+      document.getElementById('f-intent').value = f.intent || '';
+      document.getElementById('f-proj').value = f.proj || '';
+      document.getElementById('f-intern').value = f.intern || '';
+      document.getElementById('f-portfolio').value = f.portfolio || '';
+      document.getElementById('f-awards').value = f.awards || '';
+      document.getElementById('f-city').value = f.city || '';
+      document.getElementById('f-type').value = f.type || '';
+    }
+    if(data.skills?.length){
+      chosenSkills = new Set(data.skills);
+      renderSkillPool();
+      renderChosen();
+    }
+    if(data.diagJob) document.getElementById('diagJob').value = data.diagJob;
+
+    // 恢复 Tab 状态（不触发 saveProfile）
+    if(data.activeTab){
+      const tab = data.activeTab === 'paste' ? 'upload' : data.activeTab;
+      const isForm = tab === 'form';
+      document.getElementById('pane-form').classList.toggle('hidden', !isForm);
+      document.getElementById('pane-upload').classList.toggle('hidden', isForm);
+      toggleActive('tab-form', isForm);
+      toggleActive('tab-upload', !isForm);
+    }
+
+    onResumeInput();
+    recalcForm();
+  }catch(e){ /* 本地数据损坏时静默忽略 */ }
+  finally{ isRestoring = false; }
+}
+
+/** 保存最近一次匹配结果 */
+function saveMatchResults(){
+  if(!matchedJobs.length) return;
+  const data = {
+    profile: userProfile,
+    jobs: matchedJobs,
+    time: new Date().toLocaleString('zh-CN'),
+    topScore: Math.max(...matchedJobs.map(j=>j.score)),
+  };
+  try{ localStorage.setItem(MKEY, JSON.stringify(data)); }catch(e){}
+}
+
+/** 恢复最近一次匹配结果 */
+function loadMatchResults(){
+  try{
+    const raw = localStorage.getItem(MKEY);
+    if(!raw) return;
+    const data = JSON.parse(raw);
+    if(!data.jobs?.length) return;
+    matchedJobs = data.jobs;
+    userProfile = data.profile || {};
+    document.getElementById('step-match').classList.remove('hidden');
+    document.getElementById('matchLoading').classList.add('hidden');
+    document.getElementById('matchSummary').classList.remove('hidden');
+    setStep(2);
+    renderMatchSummary();
+    renderJobs(false);
+  }catch(e){}
+}
+
+/* ---------- 3. 岗位智能匹配 ---------- */
+
+// 收集用户画像
+function collectProfile(){
+  if(isFormMode()){
+    return {
+      mode:'form',
+      edu: val('f-edu'),
+      intent: val('f-intent'),
+      skills: [...chosenSkills],
+      proj: val('f-proj'),
+      intern: val('f-intern'),
+      portfolio: val('f-portfolio'),
+      awards: val('f-awards'),
+      city: val('f-city'),
+      type: val('f-type'),
+      raw: `${val('f-edu')} ${val('f-intent')} ${[...chosenSkills].join(' ')} ${val('f-proj')} ${val('f-intern')} ${val('f-portfolio')} ${val('f-awards')}`
+    };
+  }
+  const raw = val('resumeText');
+  const hit = PRESET_SKILLS.filter(s=> raw.toLowerCase().includes(s.toLowerCase()));
+  const cities = ['深圳','广州','北京','上海','杭州','成都','西安','合肥','青岛','香港'];
+  const city = cities.find(c=> raw.includes(c)) || '';
+  const typeMap = [['后端','技术研发'],['前端','技术研发'],['算法','技术研发'],['数据','数据分析'],['产品','产品'],['设计','设计'],['运营','运营']];
+  const type = (typeMap.find(([k])=> raw.includes(k)) || [])[1] || '';
+  const intentMatch = raw.match(/(?:期望|意向|目标|从事)[\s\S]{0,6}?(.{2,12}?)(?:岗|工程师|师|经理)/);
+  const intent = intentMatch ? intentMatch[1].trim() : '';
+  return { mode:'upload', raw, edu: extractEdu(raw), skills:hit, intent, city, type };
+}
+
+/** 计算单个岗位匹配度（技能 / 城市 / 类别 / 学历 / 意向 / JD 关键词） */
+function scoreJob(job, p){
+  ensureJobFields(job);
+  const skillSet = new Set((p.skills||[]).map(s=> s.toLowerCase()));
+  const rawLower = (p.raw||'').toLowerCase();
+  const reqText = ((job.requirement||'') + ' ' + (job.responsibility||'') + ' ' + job.title).toLowerCase();
+  const allTags = job.tags || [];
+
+  const matchedTags = allTags.filter(t=>{
+    const tl = t.toLowerCase();
+    return skillSet.has(tl) || rawLower.includes(tl);
+  });
+  const missedTags = allTags.filter(t=> !matchedTags.includes(t));
+  const matchedJd = (job.jdKeywords||[]).filter(k=>{
+    const kl = k.toLowerCase();
+    return rawLower.includes(kl) || [...skillSet].some(s=> kl.includes(s) || s.includes(kl));
+  });
+
+  const breakdown = { skill:0, city:0, type:0, intent:0, edu:0, jd:0 };
+
+  breakdown.skill = Math.min(38, matchedTags.length * 9 + (matchedTags.length >= Math.max(allTags.length,1) ? 6 : 0));
+  breakdown.jd = Math.min(14, matchedJd.length * 4);
+
+  if(p.city){
+    const want = normalizeCity(p.city);
+    const locs = (job.locations||[job.city]).map(normalizeCity);
+    breakdown.city = (p.city === '不限' || locs.some(l=> l.includes(want) || want.includes(l))) ? 14 : 4;
+  }
+
+  if(p.type){
+    const mapped = mapFormTypeToCategory(p.type);
+    if(job.type === mapped) breakdown.type = 12;
+    else if(reqText.includes(p.type.slice(0,2))) breakdown.type = 5;
+  }
+
+  const edu = p.edu || extractEdu(rawLower);
+  if(edu && job.requirement){
+    const req = job.requirement;
+    if(/博士/.test(req) && edu === '博士') breakdown.edu = 10;
+    else if(/硕士|研究生/.test(req) && (edu === '硕士' || edu === '博士')) breakdown.edu = 9;
+    else if(/本科/.test(req) && ['本科','硕士','博士'].includes(edu)) breakdown.edu = 8;
+    else if(/大专|专科/.test(req) && edu === '大专') breakdown.edu = 6;
+  }
+
+  if(p.intent){
+    const kw = p.intent.replace(/工程师|师|经理|专员/g,'').trim();
+    if(kw && (job.title.includes(kw) || job.title.includes(kw.slice(0,2)))) breakdown.intent = 10;
+  }
+  if(!breakdown.intent && rawLower){
+    const titleKw = job.title.replace(/（.*?）|\(.*?\)/g,'').trim();
+    if(titleKw.length >= 2 && rawLower.includes(titleKw.slice(0,2))) breakdown.intent = 6;
+  }
+
+  let internBonus = 0, portfolioBonus = 0, awardBonus = 0;
+  if(p.intern && p.intern.length > 15){
+    internBonus = Math.min(6, Math.floor(p.intern.length / 35));
+  }
+  if(p.portfolio && /github|gitlab|behance|dribbble|notion|http|www\./i.test(p.portfolio)){
+    portfolioBonus = 3;
+  }
+  if(p.awards && p.awards.length > 3){
+    awardBonus = Math.min(5, Math.floor(p.awards.length / 20));
+    if(/一等奖|金奖|银奖|国赛|省赛|ACM|挑战杯|数学建模|奖学金|优秀毕业生|荣誉称号/i.test(p.awards)){
+      awardBonus = Math.max(awardBonus, 4);
+    }
+  }
+
+  let score = 32 + breakdown.skill + breakdown.city + breakdown.type + breakdown.intent + breakdown.edu + breakdown.jd + internBonus + portfolioBonus + awardBonus;
+  score = Math.max(38, Math.min(96, Math.round(score)));
+
+  const highlights = [];
+  if(matchedTags.length) highlights.push({ k:'技能命中', v: matchedTags.slice(0,4).join('、'), type:'skill' });
+  if(missedTags.length && missedTags.length <= 3) highlights.push({ k:'待补充', v: missedTags.slice(0,3).join('、'), type:'gap' });
+  if(breakdown.city >= 10) highlights.push({ k:'地点匹配', v: job.city, type:'city' });
+  if(breakdown.type >= 10) highlights.push({ k:'类别匹配', v: job.type, type:'type' });
+  if(breakdown.edu >= 6) highlights.push({ k:'学历契合', v: edu || '符合要求', type:'edu' });
+  if(breakdown.intent >= 6) highlights.push({ k:'意向契合', v: p.intent || '简历方向一致', type:'intent' });
+  if(matchedJd.length) highlights.push({ k:'JD关键词', v: matchedJd.slice(0,3).join('、'), type:'jd' });
+  if(internBonus >= 3) highlights.push({ k:'实习加分', v: '有实习经历描述', type:'intern' });
+  if(portfolioBonus) highlights.push({ k:'作品集', v: '已附作品链接', type:'portfolio' });
+  if(awardBonus >= 3) highlights.push({ k:'荣誉奖项', v: p.awards.slice(0, 24) + (p.awards.length > 24 ? '…' : ''), type:'award' });
+  if(!highlights.length) highlights.push({ k:'方向相关', v: '岗位与背景存在关联', type:'default' });
+
+  return { ...job, score, matchedTags, missedTags, matchedJd, breakdown, highlights };
+}
+
+const LOADING_STEPS = ['正在解析你的能力画像…','提取技能与项目关键词…','计算多维匹配度…','生成推荐排序…'];
+
+function setLoadingMsg(text){
+  const el = document.getElementById('loadingMsg');
+  el.classList.add('is-changing');
+  setTimeout(()=>{ el.textContent = text; el.classList.remove('is-changing'); }, 180);
+}
+
+/** 加载阶段：多维匹配度动态计算动画 */
+function animateScoreCalc(profile, onDone){
+  const panel = document.getElementById('scoreCalcPanel');
+  const dimsEl = document.getElementById('scoreCalcDims');
+  panel.classList.remove('hidden');
+
+  const dims = [
+    { label:'技能匹配度', target: Math.min(95, 40 + profile.skills.length * 10) },
+    { label:'意向契合度', target: (profile.intent||profile.type) ? 78 : 55 },
+    { label:'地点偏好匹配', target: profile.city ? 82 : 60 },
+    { label:'JD关键词覆盖', target: Math.min(90, 45 + profile.skills.length * 6) },
+  ];
+
+  dimsEl.innerHTML = dims.map((d,i)=>`
+    <div id="calc-dim-${i}">
+      <div class="flex justify-between text-caption mb-1">
+        <span class="text-ink-700">${d.label}</span>
+        <span class="calc-val font-semibold text-tc-500" data-target="${d.target}" data-suffix="%">0%</span>
+      </div>
+      <div class="h-1 bg-[#f0f2f5] rounded overflow-hidden">
+        <div class="calc-bar bar-fg h-full bg-tc-500 rounded" style="width:0%"></div>
+      </div>
+    </div>`).join('');
+
+  dims.forEach((d,i)=>{
+    setTimeout(()=>{
+      const row = dimsEl.querySelector(`#calc-dim-${i}`);
+      row.querySelector('.calc-bar').style.width = d.target + '%';
+      animateNumber(row.querySelector('.calc-val'), 0, d.target, 500);
+    }, i * 220);
+  });
+
+  setTimeout(()=>{
+    panel.classList.add('hidden');
+    onDone();
+  }, dims.length * 220 + 400);
+}
+
+function startMatch(){
+  if(!jobsReady || !JOB_DB.length){ toast('岗位数据尚未加载完成'); return; }
+  if(matchStepTimer) clearInterval(matchStepTimer);
+
+  userProfile = collectProfile();
+  saveProfile();
+  document.getElementById('step-match').classList.remove('hidden');
+  document.getElementById('matchSummary').classList.add('hidden');
+  setStep(2);
+  document.getElementById('step-match').scrollIntoView({behavior:'smooth'});
+
+  const loading = document.getElementById('matchLoading');
+  const list = document.getElementById('jobList');
+  loading.classList.remove('hidden');
+  list.innerHTML = '';
+  document.getElementById('scoreCalcPanel').classList.add('hidden');
+  document.getElementById('loadBar').style.width = '0%';
+
+  let step = 0;
+  setLoadingMsg(LOADING_STEPS[0]);
+
+  matchStepTimer = setInterval(()=>{
+    step++;
+    document.getElementById('loadBar').style.width = Math.min(92, step * 22) + '%';
+    if(step < LOADING_STEPS.length) setLoadingMsg(LOADING_STEPS[step]);
+    if(step >= 3){
+      clearInterval(matchStepTimer);
+      matchStepTimer = null;
+      animateScoreCalc(userProfile, finishMatch);
+    }
+  }, 500);
+}
+
+const DISPLAY_LIMIT = 80;   // 单次最多渲染岗位卡片数
+const SCORE_CHUNK = 300;    // 分批计算匹配度，避免主线程长时间阻塞
+
+/** 分批计算全库匹配度，完成后回调 */
+function runMatchScoring(profile, onDone){
+  const scored = [];
+  let i = 0;
+  function chunk(){
+    const end = Math.min(i + SCORE_CHUNK, JOB_DB.length);
+    for(; i < end; i++) scored.push(scoreJob(JOB_DB[i], profile));
+    if(i < JOB_DB.length) setTimeout(chunk, 0);
+    else onDone(scored);
+  }
+  chunk();
+}
+
+/** 匹配计算完成后的收尾 */
+function finishMatch(){
+  document.getElementById('loadBar').style.width = '100%';
+  runMatchScoring(userProfile, scored=>{
+    matchedJobs = scored.sort((a,b)=> b.score - a.score).slice(0, 200);
+    saveMatchResults();
+    document.getElementById('matchLoading').classList.add('hidden');
+    renderMatchSummary();
+    renderJobs(true);
+    const top = Math.max(...matchedJobs.map(j=>j.score));
+    saveHistory('岗位匹配', `匹配到 ${JOB_DB.length} 个岗位，展示 Top ${matchedJobs.length}，最高匹配度 ${top}%`);
+  });
+}
+
+/** 渲染匹配结果摘要栏 */
+function renderMatchSummary(){
+  if(!matchedJobs.length) return;
+  const summary = document.getElementById('matchSummary');
+  summary.classList.remove('hidden');
+  const top = Math.max(...matchedJobs.map(j=>j.score));
+  document.getElementById('matchCount').textContent = matchedJobs.length;
+  const topEl = document.getElementById('topScore');
+  topEl.textContent = '0';
+  animateNumber(topEl, 0, top, 700);
+  const allSkills = new Set();
+  matchedJobs.forEach(j=> j.matchedTags?.forEach(s=> allSkills.add(s)));
+  const skillsBox = document.getElementById('topSkills');
+  const skillArr = [...allSkills].slice(0,5);
+  skillsBox.innerHTML = skillArr.length
+    ? skillArr.map(s=>`<span class="skill-hit">✓ ${s}</span>`).join('')
+    : '<span class="text-caption">填写更多技能可获得更精准匹配</span>';
+}
+
+/** 渲染岗位卡片 */
+function renderJobs(animate){
+  let arr = [...matchedJobs];
+  const fc = document.getElementById('filterCategory').value;
+  const fl = document.getElementById('filterLocation').value;
+  const fs = document.getElementById('filterSource').value;
+  const sb = document.getElementById('sortBy').value;
+  if(fc) arr = arr.filter(j=> j.type === fc);
+  if(fl) arr = arr.filter(j=> normalizeCity(j.city) === fl || (j.locations||[]).some(l=> normalizeCity(l) === fl));
+  if(fs) arr = arr.filter(j=> j.source === fs);
+  arr.sort((a,b)=> sb === 'title' ? a.title.localeCompare(b.title, 'zh') : b.score - a.score);
+
+  const list = document.getElementById('jobList');
+  list.innerHTML = '';
+  if(!arr.length){
+    list.innerHTML = '<div class="text-center text-caption py-12 bg-white rounded-md border border-[#e5e8ed]">该筛选条件下暂无匹配岗位</div>';
+    return;
+  }
+
+  const total = arr.length;
+  const displayArr = arr.slice(0, DISPLAY_LIMIT);
+  if(total > DISPLAY_LIMIT){
+    const tip = document.createElement('div');
+    tip.className = 'text-caption text-ink-700 bg-tc-50 border border-tc-100 rounded-md px-4 py-3 mb-4';
+    tip.textContent = `共 ${total} 条匹配结果，当前展示得分最高的前 ${DISPLAY_LIMIT} 条，可使用筛选器缩小范围`;
+    list.appendChild(tip);
+  }
+
+  displayArr.forEach((j,idx)=>{
+    const card = document.createElement('div');
+    card.className = 'job-card fade-up-stagger bg-white rounded-md shadow-card border border-[#e5e8ed] p-4 sm:p-6';
+    card.style.animationDelay = Math.min(idx * 0.05, 0.35) + 's';
+    card.dataset.jobId = j.id;
+    const ringColor = j.score>=82 ? '#0052D9' : j.score>=68 ? '#2667e8' : '#86909c';
+    const diagLabel = escapeHtml(j.company + ' · ' + j.title);
+    const sourceBadge = j.source === 'social'
+      ? '<span class="text-caption px-2 py-0.5 rounded bg-[#f0f2f5] text-ink-700">社招</span>'
+      : '<span class="text-caption px-2 py-0.5 rounded bg-tc-50 text-tc-500 border border-tc-100">校招</span>';
+    const hlHtml = j.highlights.map(h=>{
+      const cls = h.type==='gap'
+        ? 'text-caption px-2.5 py-1 rounded bg-[#fafbfc] text-ink-500 border border-[#e5e8ed]'
+        : 'text-caption px-2.5 py-1 rounded bg-tc-50 text-tc-500 border border-tc-100';
+      return `<span class="${cls}"><b class="font-medium">${escapeHtml(h.k)}</b> · ${escapeHtml(h.v)}</span>`;
+    }).join('');
+    const skillHits = (j.matchedTags||[]).map(s=>`<span class="skill-hit">${escapeHtml(s)}</span>`).join('');
+
+    card.innerHTML = `
+      <div class="job-card-layout">
+        <div class="shrink-0 relative w-[68px] h-[68px] sm:w-[72px] sm:h-[72px]">
+          <svg width="72" height="72" viewBox="0 0 72 72" class="-rotate-90 w-full h-full">
+            <circle cx="36" cy="36" r="30" stroke="#f0f2f5" stroke-width="6" fill="none"/>
+            <circle class="ring-fg" cx="36" cy="36" r="30" stroke="${ringColor}" stroke-width="6" fill="none"
+              stroke-linecap="round" stroke-dasharray="${2*Math.PI*30}" stroke-dashoffset="${2*Math.PI*30}"
+              data-target="${j.score}" data-r="30"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="cnt text-base sm:text-lg font-semibold" style="color:${ringColor}" data-target="${j.score}">0</span>
+            <span class="text-caption -mt-0.5">匹配度</span>
+          </div>
+        </div>
+        <div class="flex-1 min-w-0 job-card-body">
+          <div class="job-card-header flex items-start justify-between gap-3 sm:gap-4">
+            <div class="flex items-start gap-3 min-w-0">
+              ${companyLogoHtml(j.company)}
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="font-semibold text-body text-ink-900">${escapeHtml(j.title)}</h3>
+                  ${matchLevelBadge(j.score)}
+                </div>
+                <p class="text-caption mt-1 break-words">${escapeHtml(j.company)}</p>
+              </div>
+            </div>
+            <span class="job-card-salary shrink-0">${sourceBadge}</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-3 text-caption">
+            <span class="inline-flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="2"/></svg>${escapeHtml(j.city)}
+            </span>
+            <span class="px-2 py-0.5 rounded bg-[#f0f2f5] text-ink-700">${escapeHtml(j.type)}</span>
+          </div>
+          ${skillHits ? `<div class="mt-3 flex flex-wrap gap-2">${skillHits}</div>` : ''}
+          <div class="mt-3 flex flex-wrap gap-2">${hlHtml}</div>
+          <div class="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+            <p class="text-caption sm:truncate">${escapeHtml(j.desc)}</p>
+            <div class="flex gap-3 shrink-0 self-start sm:self-auto">
+              <button type="button" class="detail-btn text-caption text-ink-700 font-medium hover:text-tc-500 transition-colors">查看详情</button>
+              <button data-diag="${diagLabel}" class="diag-btn text-caption text-tc-500 font-medium hover:text-tc-600 transition-colors duration-200">诊断简历 →</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    card.querySelector('.diag-btn').addEventListener('click', e=>{
+      e.stopPropagation();
+      diagFromJob(e.currentTarget.dataset.diag);
+    });
+    card.querySelector('.detail-btn').addEventListener('click', e=>{
+      e.stopPropagation();
+      openJobDetail(j.id);
+    });
+    card.addEventListener('click', ()=> openJobDetail(j.id));
+    list.appendChild(card);
+  });
+
+  if(animate) requestAnimationFrame(()=> animateRings(list));
+}
+
+function setBodyScroll(locked){
+  document.body.classList.toggle('drawer-open', locked);
+}
+
+/** 打开岗位详情侧栏 */
+function openJobDetail(jobId){
+  const job = matchedJobs.find(j=> String(j.id) === String(jobId)) || JOB_DB.find(j=> String(j.id) === String(jobId));
+  if(!job) return;
+  document.getElementById('jdTitle').textContent = job.title;
+  document.getElementById('jdDept').textContent = job.company;
+  document.getElementById('jdResp').textContent = job.responsibility || job.desc || '暂无';
+  document.getElementById('jdReq').textContent = job.requirement || '暂无';
+  document.getElementById('jdMeta').innerHTML = [
+    `<span class="text-caption px-2 py-0.5 rounded bg-[#f0f2f5] text-ink-700">${escapeHtml(job.city)}</span>`,
+    `<span class="text-caption px-2 py-0.5 rounded bg-[#f0f2f5] text-ink-700">${escapeHtml(job.type)}</span>`,
+    `<span class="text-caption px-2 py-0.5 rounded ${job.source==='social'?'bg-[#f0f2f5] text-ink-700':'bg-tc-50 text-tc-500 border border-tc-100'}">${job.source==='social'?'社招':'校招'}</span>`,
+    job.score != null ? `<span class="text-caption px-2 py-0.5 rounded bg-tc-50 text-tc-500">匹配度 ${job.score}%</span>` : '',
+  ].join('');
+  document.getElementById('jdTags').innerHTML = (job.tags||[]).map(t=>`<span class="skill-hit">${escapeHtml(t)}</span>`).join('');
+  const link = document.getElementById('jdLink');
+  link.href = job.url || '#';
+  link.classList.toggle('pointer-events-none', !job.url);
+  link.classList.toggle('opacity-40', !job.url);
+  document.getElementById('jdDiagBtn').onclick = ()=>{
+    closeJobDetail();
+    diagFromJob(job.company + ' · ' + job.title);
+  };
+  const mask = document.getElementById('jobDetailMask');
+  const panel = document.getElementById('jobDetailPanel');
+  mask.classList.remove('hidden');
+  requestAnimationFrame(()=> mask.classList.remove('opacity-0'));
+  panel.classList.remove('translate-x-full');
+  setBodyScroll(true);
+}
+
+function closeJobDetail(){
+  const mask = document.getElementById('jobDetailMask');
+  const panel = document.getElementById('jobDetailPanel');
+  mask.classList.add('opacity-0');
+  panel.classList.add('translate-x-full');
+  setTimeout(()=> mask.classList.add('hidden'), 300);
+  if(document.getElementById('historyPanel').classList.contains('translate-x-full')){
+    setBodyScroll(false);
+  }
+}
+
+/** 数字滚动动画（requestAnimationFrame + 缓动，支持 data-suffix） */
+function animateNumber(el, from, to, duration){
+  if(!el) return;
+  const suffix = el.dataset.suffix ?? (el.classList.contains('cnt') ? '' : '%');
+  const start = performance.now();
+  function tick(now){
+    const p = Math.min(1, (now - start) / duration);
+    const v = Math.round(from + (to - from) * easeOutCubic(p));
+    el.textContent = v + suffix;
+    if(p < 1) requestAnimationFrame(tick);
+    else el.textContent = to + suffix;
+  }
+  requestAnimationFrame(tick);
+}
+
+/** 环形进度 + 数字同步动画 */
+function animateRings(scope){
+  scope.querySelectorAll('.ring-fg').forEach(c=>{
+    const t = +c.dataset.target;
+    const r = +(c.dataset.r || 30);
+    const C = 2 * Math.PI * r;
+    c.style.strokeDasharray = C;
+    setTimeout(()=> c.style.strokeDashoffset = C * (1 - t/100), 80);
+  });
+  scope.querySelectorAll('.cnt').forEach(el=>{
+    animateNumber(el, 0, +el.dataset.target, 900);
+  });
+}
+
+/* ---------- 4. 简历优化诊断 ---------- */
+
+/** 从输入文本匹配岗位库中的目标岗位 */
+function findJobFromInput(input){
+  const lower = input.toLowerCase();
+  const pool = matchedJobs.length ? matchedJobs : JOB_DB;
+  const hit = pool.find(j=>{
+    ensureJobFields(j);
+    const titleLower = j.title.toLowerCase();
+    const companyLower = (j.company||'').toLowerCase();
+    const titleMatch = lower.includes(titleLower) || titleLower.includes(lower.split('·').pop()?.trim()||'');
+    const companyMatch = companyLower && lower.includes(companyLower.split('·')[0].trim());
+    return titleMatch || (companyMatch && lower.includes(titleLower.slice(0,2)));
+  });
+  return hit || JOB_DB.find(j=> lower.includes((j.type||'').toLowerCase())) || JOB_DB[0];
+}
+
+function diagFromJob(name){
+  document.getElementById('diagJob').value = name;
+  saveProfile();
+  document.getElementById('step-diag').scrollIntoView({behavior:'smooth'});
+  startDiag();
+}
+
+function startDiag(){
+  const jobInput = val('diagJob');
+  if(!jobInput){ toast('请先输入目标岗位'); return; }
+  saveProfile();
+  setStep(3);
+  const loading = document.getElementById('diagLoading');
+  const report = document.getElementById('diagReport');
+  report.classList.add('hidden');
+  loading.classList.remove('hidden');
+
+  setTimeout(()=>{
+    loading.classList.add('hidden');
+    lastDiagData = buildDiagReport(jobInput);
+    report.innerHTML = lastDiagData.html;
+    window.__tips = lastDiagData.tips;
+    report.classList.remove('hidden');
+    report.classList.add('fade-in');
+    animateRings(report);
+    saveHistory('简历诊断', `「${jobInput}」匹配度 ${lastDiagData.overall}%`);
+  }, 1200);
+}
+
+/** 基于目标岗位与用户画像生成诊断报告 */
+function buildDiagReport(jobInput){
+  const p = collectProfile();
+  const targetJob = findJobFromInput(jobInput);
+  const skillSet = new Set(p.skills.map(s=>s.toLowerCase()));
+  const rawLower = (p.raw||'').toLowerCase();
+
+  const matchedSkills = targetJob.tags.filter(t=> skillSet.has(t.toLowerCase()));
+  const missedSkills = targetJob.tags.filter(t=> !skillSet.has(t.toLowerCase()));
+  const matchedJd = (targetJob.jdKeywords||[]).filter(k=> rawLower.includes(k.toLowerCase()));
+  const missedJd = (targetJob.jdKeywords||[]).filter(k=> !rawLower.includes(k.toLowerCase()));
+
+  const skillScore = Math.min(96, Math.round(38 + matchedSkills.length / Math.max(targetJob.tags.length,1) * 45));
+  const expLen = [p.proj, p.intern, p.portfolio, p.awards].filter(Boolean).join(' ').length;
+  const projScore = expLen > 80 ? 86 : expLen > 40 ? 78 : (p.raw.length > 80 ? 72 : 52);
+  const internScore = (p.intern && p.intern.length > 25) ? 82 : (p.intern && p.intern.length > 8) ? 68 : 48;
+  const portfolioScore = (p.portfolio && /github|http|www\.|behance|dribbble/i.test(p.portfolio)) ? 80
+    : (p.portfolio && p.portfolio.length > 15) ? 70 : 45;
+  const awardScore = (p.awards && /一等奖|金奖|国赛|ACM|挑战杯|数学建模/i.test(p.awards)) ? 88
+    : (p.awards && p.awards.length > 15) ? 78 : (p.awards && p.awards.length > 3) ? 65 : 42;
+  const intentScore = (p.intent && jobInput.includes(p.intent.slice(0,2))) ? 88
+    : (p.intent || p.type === targetJob.type) ? 78 : 58;
+  const jdScore = Math.min(92, Math.round(35 + matchedJd.length / Math.max(targetJob.jdKeywords.length,1) * 50));
+
+  const overall = Math.round(skillScore * 0.28 + projScore * 0.17 + internScore * 0.13 + portfolioScore * 0.08 + awardScore * 0.1 + intentScore * 0.14 + jdScore * 0.1);
+
+  const dims = [
+    { name:'技能匹配', score: skillScore,
+      note: matchedSkills.length
+        ? `已命中 ${matchedSkills.length}/${targetJob.tags.length} 项核心技能：${matchedSkills.join('、')}`
+        : `岗位核心技能为 ${targetJob.tags.join('、')}，建议在简历中明确体现` },
+    { name:'项目经历', score: projScore,
+      note: projScore >= 75 ? '项目描述较完整，建议补充量化数据与业务结果' : '缺少与目标岗位相关的项目经历，建议新增 1-2 段' },
+    { name:'实习经历', score: internScore,
+      note: internScore >= 70 ? '已填写实习经历，与校招/实习岗较为契合' : '建议补充 1 段实习：公司、岗位、技术栈与可量化成果' },
+    { name:'作品集', score: portfolioScore,
+      note: portfolioScore >= 75 ? '已附作品集链接，便于面试官快速验证能力' : '技术/设计/产品岗建议附上 GitHub、个人站点或 Behance 等链接' },
+    { name:'获奖信息', score: awardScore,
+      note: awardScore >= 75 ? '竞赛/荣誉奖项较突出，校招简历竞争力强' : '可补充学科竞赛、奖学金、荣誉称号等（如 ACM、数学建模、国奖奖学金）' },
+    { name:'岗位意向', score: intentScore,
+      note: intentScore >= 75 ? `求职方向与「${targetJob.title}」较为一致` : `建议将求职意向明确为「${targetJob.title}」相关方向` },
+    { name:'JD关键词覆盖', score: jdScore,
+      note: matchedJd.length
+        ? `已覆盖 ${matchedJd.length} 个 JD 关键词：${matchedJd.join('、')}`
+        : `建议补充 JD 高频词：${missedJd.slice(0,3).join('、')}` },
+  ];
+
+  const todos = [];
+  if(missedSkills.length) todos.push(`技能缺口：建议补充「${missedSkills.slice(0,3).join('、')}」相关经历或学习成果`);
+  if(missedJd.length) todos.push(`关键词缺失：简历中未出现「${missedJd.slice(0,2).join('、')}」等岗位高频词，建议在项目描述中自然融入`);
+  if(projScore < 70) todos.push('项目经历描述偏简略，建议使用「负责…基于…实现…提升/降低…%」的结构补充量化成果');
+  if(internScore < 65 && (targetJob.source === 'campus' || /实习|应届/.test(targetJob.title + targetJob.requirement))) todos.push('校招/实习岗建议补充实习经历：写明公司、岗位、技术栈与业务成果');
+  if(portfolioScore < 65 && ['设计','技术','产品'].includes(targetJob.type)) todos.push('建议在简历中附上作品集链接（GitHub / 个人博客 / Behance 等），并附 1-2 句核心作品说明');
+  if(awardScore < 60 && targetJob.source === 'campus') todos.push('校招简历建议补充获奖信息：竞赛名次、奖学金、校级及以上荣誉称号，突出差异化优势');
+  if(intentScore < 70) todos.push(`求职意向不够聚焦，建议在简历开头明确目标岗位为「${targetJob.title}」`);
+  todos.push('整体描述偏过程导向，建议每条经历都包含可量化的业务结果数据');
+
+  const roleName = targetJob.title.replace(/（.*?）/g,'').trim();
+  const mainTech = matchedSkills[0] || targetJob.tags[0] || '相关技术';
+  const secondTech = matchedSkills[1] || targetJob.tags[1] || 'MySQL';
+  const projSnippet = p.proj ? p.proj.slice(0, 40) : '参与了相关项目开发';
+
+  const tips = [
+    {
+      before: projSnippet.length > 10 ? projSnippet : '参与了校园项目开发，负责部分功能实现',
+      after: `独立负责${roleName}核心模块开发，基于 ${mainTech} + ${secondTech} 设计并实现关键业务接口，${targetJob.jdKeywords[0]||'系统性能'}提升约 35%，支撑日均 ${(targetJob.id % 3) + 2} 万+ 用户访问。`,
+    },
+    {
+      before: p.skills.length ? `熟悉 ${p.skills.slice(0,2).join('、')}` : '掌握多种编程语言，有一定开发经验',
+      after: `精通 ${mainTech}，熟练使用 ${secondTech} 进行${targetJob.type==='技术'?'高并发系统':'业务'}开发，具备 ${matchedJd[0]||targetJob.jdKeywords[0]||'架构设计'}实战经验，可独立承担${roleName}日常工作。`,
+    },
+    {
+      before: p.edu || '本科学历，计算机相关专业',
+      after: `${p.edu || '本科 · 计算机相关专业'}，求职意向为${roleName}（${targetJob.city}），具备${matchedSkills.length || 2}+项岗位核心技能匹配，期望加入${targetJob.company.split('·')[0]}参与${targetJob.jdKeywords[1]||'核心业务'}建设。`,
+    },
+  ];
+
+  if(missedSkills.length){
+    tips.push({
+      before: `了解 ${missedSkills[0]} 基础知识`,
+      after: `通过${missedSkills[0]==='分布式'?'微服务课程项目':'实战项目'}掌握 ${missedSkills[0]} 核心原理，在项目中完成${missedSkills[0]}模块的设计与落地，解决${targetJob.jdKeywords[2]||'性能瓶颈'}问题。`,
+    });
+  }
+  if(portfolioScore < 75){
+    tips.push({
+      before: p.portfolio || '有个人项目积累，暂无作品集整理',
+      after: `作品集：${p.portfolio && /http/i.test(p.portfolio) ? p.portfolio.split('\n')[0] : 'github.com/username'} — 含 ${roleName} 方向代表作（${mainTech} 技术栈），附 README 说明架构、难点与成果数据，方便面试官 30 秒内了解能力边界。`,
+    });
+  }
+  if(awardScore < 75 && p.awards){
+    tips.push({
+      before: p.awards.slice(0, 50),
+      after: `${p.awards} — 建议按「赛事名称 + 名次/奖项 + 个人角色 + 技术亮点」展开，突出与 ${roleName} 岗位相关的算法/工程能力。`,
+    });
+  } else if(awardScore < 70){
+    tips.push({
+      before: '暂无系统化获奖经历描述',
+      after: `荣誉奖项：${targetJob.type==='技术'?'ACM-ICPC / 蓝桥杯 / 数学建模等竞赛名次':'相关专业竞赛或校级及以上荣誉'}，国家/校级奖学金 — 用 1 行量化说明参赛规模与个人贡献，强化校招差异化。`,
+    });
+  }
+
+  const ringColor = overall>=80 ? '#0052D9' : overall>=65 ? '#2667e8' : '#86909c';
+  const C = 2*Math.PI*46;
+
+  const html = `
+  <div class="bg-white rounded-md shadow-card border border-[#e5e8ed] overflow-hidden">
+    <div class="px-5 sm:px-8 py-5 sm:py-6 bg-gradient-to-r from-tc-50/80 to-white border-b border-[#e5e8ed] flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <div class="flex items-start gap-3 min-w-0">
+        ${companyLogoHtml(targetJob.company)}
+        <div class="min-w-0">
+          <p class="text-caption">目标岗位</p>
+          <h3 class="font-semibold text-body text-ink-900 mt-1 break-words">${escapeHtml(jobInput)}</h3>
+          <p class="text-caption mt-1 break-words">对标岗位：${escapeHtml(targetJob.company)} · ${escapeHtml(targetJob.title)}</p>
+        </div>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+        <button onclick="copyAllTips()" class="btn-secondary text-body px-4 py-2.5 rounded text-tc-500 bg-white border border-tc-200 w-full sm:w-auto">一键复制优化建议</button>
+        <button onclick="exportReport()" class="btn-primary text-body px-4 py-2.5 rounded text-white bg-tc-500 w-full sm:w-auto">导出报告</button>
+      </div>
+    </div>
+
+    <div class="p-5 sm:p-8 grid md:grid-cols-3 gap-6 sm:gap-8">
+      <div class="flex flex-col items-center justify-center md:border-r border-[#e5e8ed] md:pr-8 pb-6 md:pb-0 border-b md:border-b-0 border-[#e5e8ed]">
+        <div class="relative w-[120px] h-[120px]">
+          <svg width="120" height="120" viewBox="0 0 120 120" class="-rotate-90">
+            <circle cx="60" cy="60" r="46" stroke="#f0f2f5" stroke-width="8" fill="none"/>
+            <circle class="ring-fg" cx="60" cy="60" r="46" stroke="${ringColor}" stroke-width="8" fill="none"
+              stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" data-target="${overall}" data-r="46"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="cnt text-3xl font-semibold" style="color:${ringColor}" data-target="${overall}">0</span>
+            <span class="text-caption">整体匹配度</span>
+          </div>
+        </div>
+        <p class="text-caption text-ink-700 mt-4 text-center">${overall>=80?'匹配度优秀，建议针对性微调后投递':overall>=65?'匹配度良好，按建议优化后竞争力显著提升':'匹配度一般，建议按下方建议重点优化'}</p>
+      </div>
+
+      <div class="md:col-span-2">
+        <h4 class="text-body font-semibold text-ink-900 mb-4">关键项匹配分析</h4>
+        <div class="space-y-4">
+          ${dims.map(d=>{
+            const col = d.score>=80?'#0052D9':d.score>=65?'#2667e8':'#86909c';
+            return `<div>
+              <div class="flex justify-between text-caption mb-1.5">
+                <span class="text-ink-700 font-medium">${d.name}</span>
+                <span style="color:${col}" class="font-semibold">${d.score}%</span>
+              </div>
+              <div class="h-1.5 bg-[#f0f2f5] rounded overflow-hidden">
+                <div class="bar-fg h-full rounded" style="width:0%;background:${col}" data-w="${d.score}"></div>
+              </div>
+              <p class="text-caption mt-1.5">${d.note}</p>
+            </div>`;
+          }).join('')}
+        </div>
+        ${missedSkills.length ? `<div class="mt-4 flex flex-wrap gap-2">
+          <span class="text-caption text-ink-500 mr-1">技能缺口：</span>
+          ${missedSkills.map(s=>`<span class="text-caption px-2 py-0.5 rounded bg-[#fafbfc] text-ink-500 border border-[#e5e8ed]">${s}</span>`).join('')}
+        </div>` : ''}
+      </div>
+    </div>
+
+    <div class="px-8 pb-3">
+      <h4 class="text-body font-semibold text-ink-900 mb-3">待优化点</h4>
+      <ul class="space-y-2">
+        ${todos.map(t=>`<li class="flex gap-2.5 text-body text-ink-700"><span class="text-tc-500 mt-1">●</span><span>${t}</span></li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="p-8">
+      <h4 class="text-body font-semibold text-ink-900 mb-4">优化建议（可直接套用的润色话术）</h4>
+      <div class="space-y-4">
+        ${tips.map((t,i)=>`
+        <div class="border border-[#e5e8ed] rounded overflow-hidden">
+          <div class="px-5 py-3 bg-[#fafbfc] flex items-center justify-between">
+            <span class="text-caption">优化示例 ${i+1}</span>
+            <button onclick="copyTip(${i})" class="text-caption text-tc-500 hover:text-tc-600 transition-colors duration-200 flex items-center gap-1">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="2"/></svg>复制
+            </button>
+          </div>
+          <div class="p-5 text-body space-y-2.5">
+            <p class="text-ink-500 line-through decoration-ink-300">${escapeHtml(t.before)}</p>
+            <p class="tip-text text-ink-900 leading-relaxed">${escapeHtml(t.after)}</p>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  return { html, tips, overall, jobInput, targetJob, dims, todos };
+}
+
+function copyTip(i){
+  const text = window.__tips?.[i]?.after;
+  if(text) copyText(text);
+  else {
+    const el = document.querySelectorAll('.tip-text')[i];
+    if(el) copyText(el.textContent);
+  }
+}
+
+function copyAllTips(){
+  const tips = window.__tips || [...document.querySelectorAll('.tip-text')].map((e,i)=>({after:e.textContent}));
+  const all = tips.map((t,i)=> `【优化示例 ${i+1}】\n${t.after||t}`).join('\n\n');
+  copyText(all);
+}
+
+function copyText(t){
+  navigator.clipboard?.writeText(t).then(()=>toast('已复制到剪贴板')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');ta.remove();toast('已复制到剪贴板');
+  });
+}
+
+/* ---------- 5. 导出与历史记录 ---------- */
+function exportReport(){
+  const d = lastDiagData;
+  if(!d){ toast('请先生成诊断报告'); return; }
+  const lines = [];
+  lines.push('Offer捕手 · 简历优化诊断报告');
+  lines.push('目标岗位：' + d.jobInput);
+  lines.push('对标岗位：' + d.targetJob.company + ' · ' + d.targetJob.title);
+  lines.push('生成时间：' + new Date().toLocaleString('zh-CN'));
+  lines.push('—'.repeat(32));
+  lines.push('\n【整体匹配度】' + d.overall + '%');
+  lines.push('\n【关键项匹配分析】');
+  d.dims.forEach(dim=> lines.push(`- ${dim.name}：${dim.score}%（${dim.note}）`));
+  lines.push('\n【待优化点】');
+  d.todos.forEach(t=> lines.push('- ' + t));
+  lines.push('\n【优化建议（可直接套用）】');
+  d.tips.forEach((t,i)=> lines.push(`\n${i+1}. 原文：${t.before}\n   优化：${t.after}`));
+  downloadTxt('Offer捕手-诊断报告.txt', lines.join('\n'));
+  toast('报告已导出');
+}
+
+function downloadTxt(name, content){
+  const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function saveHistory(type, summary){
+  const list = getHistory();
+  list.unshift({ type, summary, time: new Date().toLocaleString('zh-CN') });
+  localStorage.setItem(HKEY, JSON.stringify(list.slice(0, 30)));
+  renderHistory();
+}
+
+function getHistory(){
+  try{ return JSON.parse(localStorage.getItem(HKEY)) || []; }catch(e){ return []; }
+}
+
+function renderHistory(){
+  const box = document.getElementById('historyList');
+  const list = getHistory();
+  if(!list.length){
+    box.innerHTML = '<p class="text-caption text-center mt-10">暂无历史记录</p>';
+    return;
+  }
+  box.innerHTML = list.map(h=>`
+    <div class="border border-[#e5e8ed] rounded p-4 hover:border-tc-200 transition-colors duration-200">
+      <div class="flex items-center justify-between">
+        <span class="text-caption px-2 py-0.5 rounded bg-tc-50 text-tc-500">${h.type}</span>
+        <span class="text-caption text-ink-300">${h.time.split(' ')[1]||''}</span>
+      </div>
+      <p class="text-body text-ink-700 mt-2 leading-snug break-words">${escapeHtml(h.summary)}</p>
+      <p class="text-caption mt-1.5">${h.time.split(' ')[0]}</p>
+    </div>`).join('');
+}
+
+function clearHistory(){
+  localStorage.removeItem(HKEY);
+  renderHistory();
+  toast('已清空历史记录');
+}
+
+function toggleHistory(){
+  const mask = document.getElementById('historyMask');
+  const panel = document.getElementById('historyPanel');
+  const open = panel.classList.contains('translate-x-full');
+  if(open){
+    mask.classList.remove('hidden'); requestAnimationFrame(()=>mask.classList.remove('opacity-0'));
+    panel.classList.remove('translate-x-full');
+    renderHistory();
+    setBodyScroll(true);
+  } else {
+    mask.classList.add('opacity-0'); setTimeout(()=>mask.classList.add('hidden'),300);
+    panel.classList.add('translate-x-full');
+    if(document.getElementById('jobDetailPanel').classList.contains('translate-x-full')){
+      setBodyScroll(false);
+    }
+  }
+}
+
+/* ---------- 工具：步骤指示 / Toast ---------- */
+function setStep(n){
+  for(let i=1;i<=3;i++){
+    const ind = document.getElementById('ind-'+i);
+    const dot = ind.querySelector('.step-dot');
+    const active = i<=n;
+    ind.classList.toggle('opacity-50', !active);
+    dot.classList.toggle('bg-tc-500', active);
+    dot.classList.toggle('text-white', active);
+    dot.classList.toggle('bg-[#e5e8ed]', !active);
+    dot.classList.toggle('text-ink-500', !active);
+  }
+}
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.remove('hidden');
+  t.querySelector('div').classList.remove('toast-in'); void t.offsetWidth; t.querySelector('div').classList.add('toast-in');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.add('hidden'), 1800);
+}
+
+/* ---------- 初始化 ---------- */
+renderSkillPool();
+loadProfile();
+recalcForm();
+loadMatchResults();
+renderHistory();
+loadJobs();
+initUploadZone();
+
+// 诊断报告渲染后，触发维度进度条动画
+const diagObs = new MutationObserver(()=>{
+  document.querySelectorAll('#diagReport [data-w]').forEach(b=>{
+    if(b.style.width === '0%'){
+      requestAnimationFrame(()=>{ b.style.width = b.dataset.w + '%'; });
+    }
+  });
+});
+diagObs.observe(document.getElementById('diagReport'), { childList: true });
+</script>
+</body>
+</html>
