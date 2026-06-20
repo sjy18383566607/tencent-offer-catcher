@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""生成 Offer捕手 方案说明 PDF（与 doc.html 内容同步，约 980 字）"""
+"""生成 Offer捕手 方案说明 PDF（与 doc.html 内容同步）"""
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
@@ -23,7 +23,7 @@ else:
     pdfmetrics.registerFont(TTFont('Hei', FONT))
     pdfmetrics.registerFont(TTFont('HeiB', FONT))
 
-TC, INK, GRAY, LINE = HexColor('#0052D9'), HexColor('#1a1a1a'), HexColor('#5a6068'), HexColor('#e6e9ee')
+TC, INK, GRAY = HexColor('#0052D9'), HexColor('#1a1a1a'), HexColor('#5a6068')
 W, H = A4
 
 title = ParagraphStyle('t', fontName='HeiB', fontSize=20, leading=27, textColor=INK)
@@ -69,21 +69,26 @@ doc.addPageTemplates([PageTemplate(id='main', frames=[frame], onPage=footer)])
 
 S = [HeaderBar(doc.width), Spacer(1, 10),
      Paragraph('「Offer捕手」学生求职匹配智能体', title), Spacer(1, 3),
-     Paragraph('作业方案说明 ｜ 腾讯 AI-HR 线上实战营（全文约 980 字）', sub),
+     Paragraph('作业方案说明 ｜ 腾讯 AI-HR 线上实战营（全文约 990 字）', sub),
      Spacer(1, 8), hr(), Spacer(1, 10),
-     Paragraph('<b>Demo：</b>https://sjy18383566607.github.io/tencent-offer-catcher/index.html', lead)]
+     Paragraph('<b>公网 Demo：</b>https://sjy18383566607.github.io/tencent-offer-catcher/index.html', lead)]
 
 sections = [
-    ('一', '问题诊断', '学生求职有三类痛点：<b>岗位难筛</b>——腾讯校招社招合计三千余岗，人工比对 JD 成本高；<b>匹配度不明</b>——简历是否契合岗位缺乏量化；<b>优化无方向</b>——不清楚岗位关键词，简历易空泛。落地中还发现：青云计划岗位 API 用 topicDetail 字段，旧爬虫致 258 条职责为空；技术岗一次匹配千余条，全量渲染致白屏；渲染函数缺方法，出现「有推荐无卡片」。'),
-    ('二', '方案设计', '「Offer捕手」构建「录入—匹配—诊断」闭环。<b>数据层</b>：Python 爬取 join.qq.com 与 careers.tencent.com 官方接口，库内 3042 条真岗位。<b>录入</b>：简历粘贴+表单，技能标签与进度条生成能力画像。<b>匹配</b>：按城市、类型、校社招、人才专项过滤后，对技能/地点/类别/学历/JD 关键词加权打分，首屏展示 10 条、点击「加载更多」追加。<b>诊断</b>：针对目标岗输出评分、差距与润色建议，支持导出。'),
-    ('三', 'AI 工具选型理由', '<b>Cursor</b>：AI 辅助编码，快速完成联调与修 bug，适合单人全栈交付。<b>规则引擎匹配</b>：不用黑盒 LLM 打分，结果可复现、无 API 费用，亮点标签可对照 JD 原文，便于答辩演示。<b>Python 爬虫</b>：批量拉取与回填官网字段，保证数据真实。<b>GitHub Pages</b>：静态部署，推送即发布，满足公网访问要求。'),
-    ('四', '关键配置', '岗位库 tencent_jobs.json（校招 534+社招 2508）；爬虫 scrape_tencent_jobs.py，补全脚本映射青云计划 topicDetail→职责；匹配分项计分总分封顶 98；筛选项含青云计划-应届生/实习生等人才专项；分页常量 DISPLAY_PAGE_SIZE=10；线上地址 sjy18383566607.github.io/tencent-offer-catcher/。'),
-    ('五', '迭代记录与效果评估', '<b>迭代</b>：①原型四模块 → ②接入真数据 → ③回填 250 条空 JD → ④改分页解决白屏 → ⑤修复渲染错误。<b>效果</b>：匹配千级岗位数秒完成，首屏秒开；详情职责覆盖率约 99%（除 8 条已下架）；诊断给出可执行优化话术。整体将找岗、比岗、改简历整合为数据驱动流程。'),
+    ('一', '问题诊断',
+     '腾讯校招/实习场景下，学生求职面临<b>信息过载</b>（三千余岗难以及时筛选）、<b>匹配不可见</b>（简历契合度缺乏量化）、<b>优化缺抓手</b>（不清楚岗位关键词）三大痛点。本项目直击上述需求，打造可公网访问、可完整演示的求职匹配智能体，帮助学生从盲目海投转向精准投递。'),
+    ('二', '方案设计',
+     '「Offer捕手」构建「录入—匹配—诊断」闭环。<b>数据层</b>：Python 爬虫直连腾讯校招与社招官方接口，沉淀 3042 条真岗位。<b>录入</b>：简历粘贴+表单双通道，技能标签与进度条生成能力画像。<b>匹配</b>：支持城市、类型、校社招、青云计划等专项筛选，六维加权打分并输出可解释亮点。<b>诊断</b>：针对目标岗给出评分、差距与润色话术，支持导出。'),
+    ('三', 'AI 工具选型理由',
+     '<b>Cursor</b>：AI 辅助全栈开发，高效完成需求拆解与联调，保障单人高质量交付。<b>规则引擎匹配</b>：多维加权、结果可复现，亮点可对照 JD 原文，答辩演示清晰可信。<b>Python 自动化</b>：批量采集与字段映射，数据权威真实。<b>GitHub Pages</b>：静态部署、推送即上线，零运维满足公网交付。'),
+    ('四', '关键配置',
+     '岗位库校招 534+社招 2508 条；青云计划字段 topicDetail 智能映射；匹配最高 98 分；人才专项与校社招联动筛选；分页 DISPLAY_PAGE_SIZE=10；线上 sjy18383566607.github.io/tencent-offer-catcher/。'),
+    ('五', '迭代记录与效果评估',
+     '经历五轮迭代，持续放大产品价值：①四模块原型闭环；②接入官方真数据；③<b>数据治理</b>——识别青云计划专属结构，自动回填 250 条官网原文，详情覆盖率达 99%；④<b>体验升级</b>——全量匹配+「首屏 10 条/加载更多」，千级结果秒开；⑤<b>交互精修</b>——筛选联动、亮点可视化、详情完善。最终实现数秒完成全库匹配，帮助学生数据驱动选岗、定向优化简历，达到可参赛、可答辩水准。'),
 ]
 
 for n, t, content in sections:
     S += [SectionNum(n, t, doc.width), Spacer(1, 7), Paragraph(content, body), Spacer(1, 6)]
 
-S.append(Paragraph('<b>交付物</b>：Demo 见上文链接；PDF 文件 Offer捕手-方案说明文档.pdf', lead))
+S.append(Paragraph('<b>交付物</b>：Demo 与 PDF 均已发布至 GitHub Pages，链接见 doc.html', lead))
 doc.build(S)
 print('PDF built: Offer捕手-方案说明文档.pdf')
