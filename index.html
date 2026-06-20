@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script>
+  /* 刷新时保留 URL hash，但不跟随锚点滚动 */
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.addEventListener('pageshow', function(){ window.scrollTo(0, 0); });
+</script>
 <title>Offer捕手 · 腾讯岗位专属匹配工具</title>
 
 <!-- Tailwind CSS (CDN) -->
@@ -63,6 +68,7 @@
 <style>
   /* —— 腾讯官网商务质感：基础与动效 —— */
   html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   body {
     font-family: "PingFang SC","Microsoft YaHei","Noto Sans SC",Inter,system-ui,sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -117,6 +123,9 @@
     cursor: pointer;
     transition: box-shadow .25s ease, border-color .25s ease;
     border-radius: 6px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
   .job-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.06); border-color:#d9e6ff; }
 
@@ -155,6 +164,229 @@
     padding: 0.875rem 1rem;
   }
 
+  /* —— 信息录入区：腾讯风交互增强 —— */
+  .input-form-card {
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: box-shadow .25s ease, border-color .25s ease;
+  }
+  .input-form-card:hover { box-shadow: 0 2px 12px rgba(0,82,217,.06); border-color: #d9e6ff; }
+  .input-form-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0052D9 0%, #2667e8 50%, #b3ccff 100%);
+    z-index: 1;
+  }
+  .input-form-tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem 0;
+    background: linear-gradient(180deg, #f8faff 0%, #fff 100%);
+    border-bottom: 1px solid #e5e8ed;
+  }
+  @media (min-width: 640px) { .input-form-tabs { padding: 0.875rem 1.5rem 0; } }
+  .input-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    background: transparent;
+    color: #86909c;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color .2s ease, background .2s ease, box-shadow .2s ease;
+    white-space: nowrap;
+  }
+  .input-tab:hover { color: #0052D9; background: rgba(240,245,255,.6); }
+  .input-tab.is-active {
+    color: #0052D9;
+    background: #fff;
+    box-shadow: 0 -1px 0 #fff, 0 0 0 1px #e5e8ed;
+    position: relative;
+  }
+  .input-tab.is-active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 0;
+    height: 2px;
+    background: #0052D9;
+  }
+  .input-tab svg { flex-shrink: 0; opacity: .85; }
+  .input-tab.is-active svg { opacity: 1; }
+
+  .progress-widget {
+    padding: 0.875rem 1rem;
+    background: linear-gradient(135deg, #f0f5ff 0%, #fff 100%);
+    border: 1px solid #d9e6ff;
+    border-radius: 6px;
+    min-width: 11rem;
+  }
+  .progress-widget-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: #4e5969;
+    margin-bottom: 0.5rem;
+  }
+  .progress-widget-head span:last-child {
+    font-weight: 600;
+    color: #0052D9;
+    font-size: 0.875rem;
+  }
+  .progress-track {
+    height: 6px;
+    background: #e5e8ed;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0052D9, #2667e8);
+    border-radius: 3px;
+    transition: width .45s cubic-bezier(.22,1,.36,1);
+    position: relative;
+  }
+  .progress-fill.is-ready { box-shadow: 0 0 8px rgba(0,82,217,.35); }
+  .progress-hint {
+    margin-top: 0.375rem;
+    font-size: 0.6875rem;
+    color: #86909c;
+    line-height: 1.4;
+  }
+
+  .form-section {
+    padding: 1.25rem 1rem;
+    background: #fafbfc;
+    border: 1px solid #e5e8ed;
+    border-radius: 6px;
+    transition: border-color .2s ease, background .2s ease;
+  }
+  .form-section:hover { border-color: #d9e6ff; }
+  .form-section:focus-within { border-color: #b3ccff; background: #fff; }
+  @media (min-width: 640px) { .form-section { padding: 1.25rem 1.25rem; } }
+  .form-section + .form-section { margin-top: 1.25rem; }
+  .form-section-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e5e8ed;
+  }
+  .form-section-icon {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    background: #f0f5ff;
+    color: #0052D9;
+    flex-shrink: 0;
+  }
+  .form-section-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #181818;
+  }
+  .form-section-desc {
+    font-size: 0.75rem;
+    color: #86909c;
+    margin-top: 0.125rem;
+  }
+  .form-field { position: relative; }
+  .form-field .field:hover { border-color: #b3ccff; }
+  .form-field-hint {
+    font-size: 0.75rem;
+    color: #86909c;
+    margin-top: 0.375rem;
+    line-height: 1.5;
+  }
+
+  .skill-panel {
+    padding: 1rem;
+    background: #fff;
+    border: 1px dashed #d9e6ff;
+    border-radius: 6px;
+    transition: border-color .2s ease, background .2s ease;
+  }
+  .skill-panel.has-skills { border-style: solid; border-color: #e5e8ed; background: #fafbfc; }
+  .skill-group-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: #86909c;
+    margin-bottom: 0.5rem;
+  }
+  .skill-group-label::before {
+    content: '';
+    width: 3px; height: 10px;
+    background: #0052D9;
+    border-radius: 1px;
+  }
+  .skill-chosen-empty {
+    font-size: 0.75rem;
+    color: #c9cdd4;
+    padding: 0.5rem 0;
+  }
+  .skill-chosen-wrap:not(:empty) { margin-top: 0.75rem; }
+  .tag-chip-selected {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 4px;
+    background: #f0f5ff;
+    color: #0052D9;
+    border: 1px solid #d9e6ff;
+    animation: chipIn .25s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes chipIn { from { opacity:0; transform:scale(.92); } to { opacity:1; transform:none; } }
+  .tag-chip-selected .chip-remove {
+    cursor: pointer;
+    opacity: .6;
+    transition: opacity .15s ease, color .15s ease;
+  }
+  .tag-chip-selected .chip-remove:hover { opacity: 1; color: #0046bd; }
+
+  .input-pane { animation: paneIn .35s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes paneIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .upload-formats {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .upload-format-tag {
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 3px;
+    background: #f0f5ff;
+    color: #0052D9;
+    border: 1px solid #d9e6ff;
+  }
+  .input-form-footer {
+    background: linear-gradient(180deg, #fafbfc 0%, #f5f7fa 100%);
+    border-top: 1px solid #e5e8ed;
+  }
+  .input-form-footer-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: #86909c;
+  }
+  .match-btn-ready:not(:disabled) {
+    box-shadow: 0 4px 14px rgba(0,82,217,.28);
+  }
+
   /* 站点主 Logo：科技风渐变 + 微光阴影 */
   .site-logo { flex-shrink: 0; line-height: 0; }
   .site-logo svg {
@@ -173,6 +405,8 @@
   .match-badge-high { background:#f0f5ff; color:#0052D9; border:1px solid #d9e6ff; }
   .match-badge-mid  { background:#f5f7fa; color:#2667e8; border:1px solid #b3ccff; }
   .match-badge-low  { background:#f5f7fa; color:#86909c; border:1px solid #e5e8ed; }
+  .match-badge-weak { background:#fafbfc; color:#a0a8b5; border:1px solid #e5e8ed; }
+  .match-badge-ref  { background:#fff1f0; color:#cf1322; border:1px solid #ffccc7; }
 
   .skill-hit {
     display:inline-flex; align-items:center; gap:3px;
@@ -240,15 +474,33 @@
     .job-card-layout .job-card-salary { align-self: flex-start; }
   }
 
-  /* —— 筛选器：小屏双列网格 —— */
+  /* —— 匹配结果区：与信息录入区同宽对齐 —— */
+  .section-content-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+    min-width: 0;
+  }
+  .match-section-header {
+    margin-bottom: 1.5rem;
+  }
   .filter-toolbar {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
+    gap: 0.75rem;
     width: 100%;
+    min-width: 0;
   }
+  .filter-toolbar select { width: 100%; min-width: 0; }
   @media (min-width: 640px) {
-    .filter-toolbar { display: flex; flex-wrap: wrap; width: auto; }
+    .filter-toolbar { gap: 1rem; }
+  }
+  @media (min-width: 1024px) {
+    .filter-toolbar {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 1rem 1.25rem;
+    }
   }
 
   /* —— 页脚：小屏纵向排列 —— */
@@ -267,11 +519,71 @@
     }
   }
 
+  /* —— 右上角防伪认证标签 —— */
+  .auth-seal {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px 4px 5px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #f0f5ff 0%, #fff 55%, #fafbfc 100%);
+    border: 1px solid #d9e6ff;
+    box-shadow: 0 1px 3px rgba(0,82,217,.07), inset 0 1px 0 rgba(255,255,255,.9);
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .auth-seal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    background: linear-gradient(145deg, #0052D9, #003a9e);
+    flex-shrink: 0;
+  }
+  .auth-seal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 1px;
+    line-height: 1.3;
+    min-width: 0;
+  }
+  .auth-seal-tag,
+  .auth-seal-name {
+    font-size: 10px;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+  .auth-seal-tag {
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: #0052D9;
+  }
+  .auth-seal-name {
+    font-weight: 400;
+    color: #86909c;
+    max-width: 7.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  @media (min-width: 640px) {
+    .auth-seal-name { max-width: none; }
+  }
+
   /* —— 抽屉打开时禁止背景滚动 —— */
   body.drawer-open { overflow: hidden; }
 
-  /* —— 岗位卡片列表：GPU 合成层，减轻动效卡顿 —— */
-  #jobList { contain: layout style; }
+  /* —— 岗位卡片列表 —— */
+  #jobList {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+    min-width: 0;
+  }
   .job-card { will-change: box-shadow; }
   .job-card.fade-up-stagger { will-change: transform, opacity; }
 
@@ -284,6 +596,9 @@
 </head>
 
 <body class="bg-bg-page text-ink-900 antialiased">
+<script>
+  window.scrollTo(0, 0);
+</script>
 
 <!-- ============ 顶部导航栏 ============ -->
 <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#e5e8ed]">
@@ -343,6 +658,19 @@
         <div class="text-caption -mt-0.5 hidden sm:block">学生求职匹配智能体</div>
       </div>
     </div>
+    <div class="flex items-center gap-2.5 sm:gap-4 shrink-0">
+      <div class="auth-seal" title="捕获岗位请认准 · 朝阳区石源里美" aria-label="捕获岗位请认准 · 朝阳区石源里美">
+        <span class="auth-seal-icon" aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l7 3.5v5.8c0 4.2-2.8 7.4-7 9.2-4.2-1.8-7-5-7-9.2V5.5L12 2z" stroke="#B3CCFF" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M8.5 12.2l2.3 2.3 4.7-4.8" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="auth-seal-body">
+          <span class="auth-seal-tag">捕获岗位请认准</span>
+          <span class="auth-seal-name">朝阳区石源里美</span>
+        </span>
+      </div>
     <nav class="hidden md:flex items-center gap-8 text-body text-ink-700">
       <a href="#step-input" class="hover:text-tc-500 transition-colors duration-200">信息录入</a>
       <a href="#step-match" class="hover:text-tc-500 transition-colors duration-200">岗位匹配</a>
@@ -356,6 +684,7 @@
     <button onclick="toggleHistory()" class="md:hidden text-ink-700 hover:text-tc-500 p-2 -mr-2" aria-label="打开历史记录">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 2M21 12a9 9 0 11-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
+    </div>
   </div>
 </header>
 
@@ -402,131 +731,203 @@
   </div>
 </div>
 
-<main class="page-container py-10 sm:py-14 space-y-12 sm:space-y-16">
+<main class="page-container py-10 sm:py-14 space-y-12 sm:space-y-16 overflow-x-clip">
 
   <!-- ============ 模块一：信息录入 ============ -->
-  <section id="step-input" class="scroll-mt-24">
+  <section data-section="step-input" class="scroll-mt-24">
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
       <div>
         <h2 class="text-section-title">① 录入你的求职信息</h2>
         <p class="text-caption mt-2">支持结构化表单填写或上传简历文件，两种方式任选其一。</p>
       </div>
-      <div class="w-full sm:w-52 shrink-0">
-        <div class="flex justify-between text-caption mb-1.5">
-          <span>信息完成度</span><span id="completePct">0%</span>
+      <div class="progress-widget w-full sm:w-auto shrink-0">
+        <div class="progress-widget-head">
+          <span>信息完成度</span>
+          <span id="completePct">0%</span>
         </div>
-        <div class="h-1.5 bg-[#f0f2f5] rounded overflow-hidden">
-          <div id="completeBar" class="bar-fg h-full bg-tc-500 rounded" style="width:0%"></div>
+        <div class="progress-track">
+          <div id="completeBar" class="progress-fill bar-fg" style="width:0%"></div>
         </div>
+        <p id="completeHint" class="progress-hint">填写教育背景与求职意向后即可开始匹配</p>
       </div>
     </div>
 
-    <div class="bg-white rounded-md shadow-card border border-[#e5e8ed] overflow-hidden">
-      <div class="flex border-b border-[#e5e8ed] px-1 sm:px-3 overflow-x-auto">
-        <button onclick="switchTab('form')" id="tab-form" class="tab-btn px-4 sm:px-6 py-3.5 sm:py-4 text-body font-medium border-b-2 border-tc-500 text-tc-500 whitespace-nowrap">结构化表单填写</button>
-        <button onclick="switchTab('upload')" id="tab-upload" class="tab-btn px-4 sm:px-6 py-3.5 sm:py-4 text-body font-medium border-b-2 border-transparent text-ink-500 hover:text-ink-700 whitespace-nowrap">简历文件上传</button>
+    <div class="input-form-card bg-white shadow-card border border-[#e5e8ed]">
+      <div class="input-form-tabs">
+        <button type="button" onclick="switchTab('form')" id="tab-form" class="input-tab is-active">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          结构化表单填写
+        </button>
+        <button type="button" onclick="switchTab('upload')" id="tab-upload" class="input-tab">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0L8 8m4-4 4 4M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          简历文件上传
+        </button>
       </div>
 
-      <div id="pane-form" class="p-5 sm:p-8">
-        <div class="grid md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-body font-medium text-ink-900 mb-2">教育背景 <span class="text-tc-500">*</span></label>
-            <input id="f-edu" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body" placeholder="如：深圳大学 · 计算机科学与技术 · 本科" />
-            <p class="err text-caption text-tc-600 mt-1.5 hidden">请填写教育背景</p>
-          </div>
-          <div>
-            <label class="block text-body font-medium text-ink-900 mb-2">求职意向（目标岗位）<span class="text-tc-500">*</span></label>
-            <input id="f-intent" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body" placeholder="如：后端开发工程师" />
-            <p class="err text-caption text-tc-600 mt-1.5 hidden">请填写求职意向</p>
-          </div>
-        </div>
-
-        <div class="mt-7">
-          <label class="block text-body font-medium text-ink-900 mb-3">技能标签 <span class="text-ink-300 font-normal">（点击添加，可多选）</span></label>
-          <div id="skillPool" class="space-y-1 mb-3"></div>
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <input id="skillInput" onkeydown="if(event.key==='Enter'){addCustomSkill();event.preventDefault();}" class="field flex-1 rounded border border-[#e5e8ed] px-4 py-2.5 text-body" placeholder="输入自定义技能后回车添加，如 LangChain、RAG" />
-            <button onclick="addCustomSkill()" class="btn-ghost px-5 py-2.5 rounded text-body font-medium text-tc-500 bg-tc-50 border border-tc-100 shrink-0">添加</button>
-          </div>
-          <div id="skillChosen" class="flex flex-wrap gap-2.5 mt-4"></div>
-        </div>
-
-        <div class="mt-7">
-          <label class="block text-body font-medium text-ink-900 mb-2">项目经历</label>
-          <textarea id="f-proj" rows="3" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body resize-none" placeholder="简述 1-2 段项目经历：你做了什么、用了什么技术、取得什么结果"></textarea>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-6 mt-7">
-          <div>
-            <label class="block text-body font-medium text-ink-900 mb-2">实习经历</label>
-            <textarea id="f-intern" rows="3" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body resize-none" placeholder="公司 · 岗位 · 时间：负责什么、用了什么技术、取得什么成果"></textarea>
-            <p class="text-caption mt-1.5">校招/实习岗建议填写，有实习经历匹配度更高</p>
-          </div>
-          <div>
-            <label class="block text-body font-medium text-ink-900 mb-2">作品集</label>
-            <textarea id="f-portfolio" rows="3" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body resize-none" placeholder="GitHub / 博客 / Behance / 个人站点链接，附 1-2 句核心作品说明"></textarea>
-            <p class="text-caption mt-1.5">技术/设计/产品岗可附链接，便于 HR 快速了解能力</p>
-          </div>
-        </div>
-
-        <div class="mt-7">
-          <label class="block text-body font-medium text-ink-900 mb-2">获奖信息</label>
-          <textarea id="f-awards" rows="2" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body resize-none" placeholder="如：ACM-ICPC 区域赛银奖、数学建模省一等奖、国家奖学金、腾讯犀牛鸟计划优秀学员……"></textarea>
-          <p class="text-caption mt-1.5">竞赛获奖、奖学金、荣誉称号等，校招简历的重要加分项</p>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-6 mt-7">
-          <div>
-            <label class="block text-body font-medium text-ink-900 mb-2">期望城市</label>
-            <select id="f-city" onchange="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white">
-              <option value="">请选择</option>
-              <option>深圳</option><option>广州</option><option>北京</option>
-              <option>上海</option><option>杭州</option><option>成都</option><option>不限</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-body font-medium text-ink-900 mb-2">岗位类型</label>
-            <select id="f-type" onchange="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white">
-              <option value="">请选择</option>
-              <option>技术研发</option><option>产品</option><option>设计</option>
-              <option>数据分析</option><option>运营</option><option>市场</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div id="pane-upload" class="p-5 sm:p-8 hidden">
-        <label class="block text-body font-medium text-ink-900 mb-3">上传简历文件</label>
-        <div id="uploadZone" class="upload-zone" onclick="document.getElementById('resumeFile').click()" role="button" tabindex="0" aria-label="上传简历文件">
-          <svg class="mx-auto mb-3 text-tc-500" width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 16V4m0 0L8 8m4-4 4 4M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <p class="text-body text-ink-900 font-medium">拖拽文件到此处，或点击选择</p>
-          <p class="text-caption mt-2">支持 .txt · .pdf · .docx，最大 5MB，仅在本地解析不上传</p>
-          <input type="file" id="resumeFile" accept=".txt,.md,.pdf,.docx" class="hidden" onchange="onResumeFileSelect(event)" />
-        </div>
-        <p id="uploadStatus" class="text-caption text-tc-500 mt-3 hidden"></p>
-        <div id="uploadResult" class="hidden mt-5">
-          <div class="flex items-center justify-between gap-3 mb-3">
-            <div class="min-w-0 flex items-center gap-2">
-              <span class="text-caption px-2 py-0.5 rounded bg-tc-50 text-tc-500 border border-tc-100 shrink-0">已解析</span>
-              <span id="uploadFileName" class="text-body font-medium text-ink-900 truncate"></span>
+      <div id="pane-form" class="input-pane p-5 sm:p-8">
+        <!-- 基本信息 -->
+        <div class="form-section">
+          <div class="form-section-head">
+            <span class="form-section-icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <div>
+              <div class="form-section-title">基本信息</div>
+              <div class="form-section-desc">必填项，用于生成你的能力画像</div>
             </div>
-            <button type="button" onclick="clearResumeFile()" class="text-caption text-ink-500 hover:text-tc-500 shrink-0">重新上传</button>
           </div>
-          <p class="text-caption text-ink-500 mb-2">解析预览（节选）</p>
-          <div id="resumePreview" class="resume-preview"></div>
-          <div class="flex items-center justify-between mt-3">
-            <span id="resumeHint" class="text-caption">建议简历内容 50 字以上，信息越完整匹配越精准</span>
-            <span id="resumeCount" class="text-caption text-ink-300">0 字</span>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="form-field">
+              <label class="block text-body font-medium text-ink-900 mb-2">教育背景 <span class="text-tc-500">*</span></label>
+              <input id="f-edu" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white" placeholder="如：深圳大学 · 计算机科学与技术 · 本科" />
+              <p class="err text-caption text-tc-600 mt-1.5 hidden">请填写教育背景</p>
+            </div>
+            <div class="form-field">
+              <label class="block text-body font-medium text-ink-900 mb-2">求职意向（目标岗位）<span class="text-tc-500">*</span></label>
+              <input id="f-intent" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white" placeholder="如：后端开发工程师" />
+              <p class="err text-caption text-tc-600 mt-1.5 hidden">请填写求职意向</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 技能标签 -->
+        <div class="form-section">
+          <div class="form-section-head">
+            <span class="form-section-icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7-6.3-4.6L5.7 21l2.3-7-6-4.6h7.6L12 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <div class="form-section-title">技能标签</div>
+              <div class="form-section-desc">点击添加，可多选，匹配更精准</div>
+            </div>
+          </div>
+          <div id="skillPanel" class="skill-panel">
+            <div id="skillPool" class="space-y-1"></div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3">
+              <input id="skillInput" onkeydown="if(event.key==='Enter'){addCustomSkill();event.preventDefault();}" class="field flex-1 rounded border border-[#e5e8ed] px-4 py-2.5 text-body bg-white" placeholder="输入自定义技能后回车，如 LangChain、RAG" />
+              <button type="button" onclick="addCustomSkill()" class="btn-ghost px-5 py-2.5 rounded text-body font-medium text-tc-500 bg-tc-50 border border-tc-100 shrink-0">添加</button>
+            </div>
+            <div id="skillChosen" class="skill-chosen-wrap flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+
+        <!-- 经历与成果 -->
+        <div class="form-section">
+          <div class="form-section-head">
+            <span class="form-section-icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <div>
+              <div class="form-section-title">经历与成果</div>
+              <div class="form-section-desc">填写越完整，匹配度计算越准确</div>
+            </div>
+          </div>
+          <div class="form-field mb-6">
+            <label class="block text-body font-medium text-ink-900 mb-2">项目经历</label>
+            <textarea id="f-proj" rows="3" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white resize-none" placeholder="简述 1-2 段项目经历：你做了什么、用了什么技术、取得什么结果"></textarea>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="form-field">
+              <label class="block text-body font-medium text-ink-900 mb-2">实习经历</label>
+              <textarea id="f-intern" rows="3" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white resize-none" placeholder="公司 · 岗位 · 时间：负责什么、用了什么技术、取得什么成果"></textarea>
+              <p class="form-field-hint">校招/实习岗建议填写，有实习经历匹配度更高</p>
+            </div>
+            <div class="form-field">
+              <label class="block text-body font-medium text-ink-900 mb-2">作品集</label>
+              <textarea id="f-portfolio" rows="3" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white resize-none" placeholder="GitHub / 博客 / Behance / 个人站点链接，附 1-2 句核心作品说明"></textarea>
+              <p class="form-field-hint">技术/设计/产品岗可附链接，便于 HR 快速了解能力</p>
+            </div>
+          </div>
+          <div class="form-field mt-6">
+            <label class="block text-body font-medium text-ink-900 mb-2">获奖信息</label>
+            <textarea id="f-awards" rows="2" oninput="recalcForm()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white resize-none" placeholder="如：ACM-ICPC 区域赛银奖、数学建模省一等奖、国家奖学金……"></textarea>
+            <p class="form-field-hint">竞赛获奖、奖学金、荣誉称号等，校招简历的重要加分项</p>
+          </div>
+        </div>
+
+        <!-- 求职偏好 -->
+        <div class="form-section">
+          <div class="form-section-head">
+            <span class="form-section-icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="2"/></svg>
+            </span>
+            <div>
+              <div class="form-section-title">求职偏好</div>
+              <div class="form-section-desc">用于筛选和排序推荐岗位</div>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-2 gap-6">
+            <div class="form-field">
+              <label class="block text-body font-medium text-ink-900 mb-2">期望城市</label>
+              <select id="f-city" onchange="onFormCityTypeChange()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white">
+                <option value="">请选择</option>
+                <option>深圳</option><option>广州</option><option>北京</option>
+                <option>上海</option><option>杭州</option><option>成都</option><option>不限</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="block text-body font-medium text-ink-900 mb-2">岗位类型</label>
+              <select id="f-type" onchange="onFormCityTypeChange()" class="field w-full rounded border border-[#e5e8ed] px-4 py-3 text-body bg-white">
+                <option value="">请选择</option>
+                <option>技术研发</option><option>产品</option><option>设计</option>
+                <option>数据分析</option><option>运营</option><option>市场</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pane-upload" class="input-pane p-5 sm:p-8 hidden">
+        <div class="form-section" style="background:#fff">
+          <div class="form-section-head">
+            <span class="form-section-icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </span>
+            <div>
+              <div class="form-section-title">上传简历文件</div>
+              <div class="form-section-desc">本地解析，不上传服务器，保护隐私</div>
+            </div>
+          </div>
+          <div id="uploadZone" class="upload-zone" onclick="document.getElementById('resumeFile').click()" role="button" tabindex="0" aria-label="上传简历文件">
+            <svg class="mx-auto mb-3 text-tc-500" width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 16V4m0 0L8 8m4-4 4 4M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p class="text-body text-ink-900 font-medium">拖拽文件到此处，或点击选择</p>
+            <p class="text-caption mt-2">最大 5MB，仅在本地解析</p>
+            <div class="upload-formats">
+              <span class="upload-format-tag">.txt</span>
+              <span class="upload-format-tag">.pdf</span>
+              <span class="upload-format-tag">.docx</span>
+            </div>
+            <input type="file" id="resumeFile" accept=".txt,.md,.pdf,.docx" class="hidden" onchange="onResumeFileSelect(event)" />
+          </div>
+          <p id="uploadStatus" class="text-caption text-tc-500 mt-3 hidden"></p>
+          <div id="uploadResult" class="hidden mt-5">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="min-w-0 flex items-center gap-2">
+                <span class="text-caption px-2 py-0.5 rounded bg-tc-50 text-tc-500 border border-tc-100 shrink-0">已解析</span>
+                <span id="uploadFileName" class="text-body font-medium text-ink-900 truncate"></span>
+              </div>
+              <button type="button" onclick="clearResumeFile()" class="text-caption text-ink-500 hover:text-tc-500 shrink-0">重新上传</button>
+            </div>
+            <p class="text-caption text-ink-500 mb-2">解析预览（节选）</p>
+            <div id="resumePreview" class="resume-preview"></div>
+            <div class="flex items-center justify-between mt-3">
+              <span id="resumeHint" class="text-caption">建议简历内容 50 字以上，信息越完整匹配越精准</span>
+              <span id="resumeCount" class="text-caption text-ink-300">0 字</span>
+            </div>
           </div>
         </div>
         <textarea id="resumeText" class="hidden" aria-hidden="true"></textarea>
       </div>
 
-      <div class="px-5 sm:px-8 py-4 sm:py-5 bg-[#fafbfc] border-t border-[#e5e8ed] flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <span class="text-caption text-center sm:text-left">数据仅在本地处理，不会上传服务器</span>
-        <button id="matchBtn" onclick="startMatch()" class="btn-primary bg-tc-500 text-white px-8 py-3 rounded-md text-body font-medium disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto">
+      <div class="input-form-footer px-5 sm:px-8 py-4 sm:py-5 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <span class="input-form-footer-hint">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          数据仅在本地处理，不会上传服务器
+        </span>
+        <button id="matchBtn" onclick="startMatch()" class="btn-primary match-btn-ready bg-tc-500 text-white px-8 py-3 rounded-md text-body font-medium disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto inline-flex items-center justify-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
           开始智能匹配
         </button>
       </div>
@@ -534,30 +935,35 @@
   </section>
 
   <!-- ============ 模块二：岗位智能匹配 ============ -->
-  <section id="step-match" class="scroll-mt-24 hidden">
-    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
-      <div>
-        <h2 class="text-section-title">② 为你匹配到的岗位</h2>
-        <p class="text-caption mt-2">基于你的能力与意向，按匹配度智能排序。</p>
-      </div>
-      <div class="filter-toolbar text-body w-full lg:w-auto">
-        <select id="filterCategory" onchange="renderJobs()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white w-full sm:w-auto">
-          <option value="">全部类别</option>
-        </select>
-        <select id="filterLocation" onchange="renderJobs()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white w-full sm:w-auto">
-          <option value="">全部城市</option>
-        </select>
-        <select id="filterSource" onchange="renderJobs()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white w-full sm:w-auto">
-          <option value="">校招+社招</option>
-          <option value="campus">校招</option>
-          <option value="social">社招</option>
-        </select>
-        <select id="sortBy" onchange="renderJobs()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white w-full sm:w-auto">
-          <option value="match">按匹配度排序</option>
-          <option value="title">按岗位名称排序</option>
-        </select>
-      </div>
+  <section data-section="step-match" class="scroll-mt-24 hidden">
+    <div class="match-section-header">
+      <h2 class="text-section-title">② 为你匹配到的岗位</h2>
+      <p class="text-caption mt-2">基于你的能力与意向，按匹配度智能排序。</p>
     </div>
+
+    <div class="section-content-stack">
+      <div class="bg-white rounded-md shadow-card border border-[#e5e8ed] p-4 sm:p-5">
+        <div class="filter-toolbar text-body">
+          <select id="filterCategory" onchange="onMatchFilterChange()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white">
+            <option value="">全部类别</option>
+          </select>
+          <select id="filterLocation" onchange="onMatchFilterChange()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white">
+            <option value="">全部城市</option>
+          </select>
+          <select id="filterSource" onchange="onMatchFilterChange()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white">
+            <option value="">校招+社招</option>
+            <option value="campus">校招</option>
+            <option value="social">社招</option>
+          </select>
+          <select id="filterTalentProgram" onchange="onMatchFilterChange()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white">
+            <option value="">全部人才专项</option>
+          </select>
+          <select id="sortBy" onchange="onSortFilterChange()" class="field rounded border border-[#e5e8ed] px-3.5 py-2.5 bg-white">
+            <option value="match">按匹配度排序</option>
+            <option value="title">按岗位名称排序</option>
+          </select>
+        </div>
+      </div>
 
     <div id="matchLoading" class="hidden">
       <div class="bg-white rounded-md shadow-card border border-[#e5e8ed] py-16 flex flex-col items-center">
@@ -575,21 +981,22 @@
     </div>
 
     <!-- 匹配结果摘要 -->
-    <div id="matchSummary" class="hidden mb-5 bg-white rounded-md shadow-card border border-[#e5e8ed] px-4 sm:px-6 py-4 flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4">
+    <div id="matchSummary" class="hidden bg-white rounded-md shadow-card border border-[#e5e8ed] px-5 sm:px-8 py-4 sm:py-5 flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4">
       <div class="flex flex-wrap items-center gap-3 sm:gap-4">
         <div class="text-caption">本次匹配</div>
-        <div class="text-body"><span id="matchCount" class="font-semibold text-tc-500">0</span> 条推荐（Top 200）</div>
+        <div class="text-body"><span id="matchCount" class="font-semibold text-tc-500">0</span> 条推荐</div>
         <div class="h-4 w-px bg-[#e5e8ed] hidden sm:block"></div>
         <div class="text-body">最高匹配度 <span id="topScore" class="font-semibold text-tc-500" data-suffix="%">0</span></div>
       </div>
       <div id="topSkills" class="flex flex-wrap gap-2"></div>
     </div>
 
-    <div id="jobList" class="grid gap-5"></div>
+    <div id="jobList"></div>
+    </div>
   </section>
 
   <!-- ============ 模块三：简历优化诊断 ============ -->
-  <section id="step-diag" class="scroll-mt-24">
+  <section data-section="step-diag" class="scroll-mt-24">
     <div class="mb-6">
       <h2 class="text-section-title">③ 简历优化诊断</h2>
       <p class="text-caption mt-2">输入目标岗位，生成简历匹配度报告与可直接套用的优化话术。</p>
@@ -709,24 +1116,288 @@ let jobsReady = false;
 let chosenSkills = new Set();
 let matchedJobs = [];
 let userProfile = {};
+let lastPoolSize = 0;
+let hasMatchedOnce = false;
 let lastDiagData = null;
 let isRestoring = false;
 let matchStepTimer = null;
 let resumeFileName = '';
 const MAX_RESUME_MB = 5;
 
-/** 从城市名提取核心城市（如「深圳总部」→「深圳」） */
+/** 从城市名提取核心城市（支持中英文，如「深圳总部」「China-Shenzhen」→「深圳」） */
 function normalizeCity(c){
   if(!c) return '';
   const s = String(c).replace(/总部|市/g,'').trim();
-  const core = ['深圳','广州','北京','上海','杭州','成都','西安','合肥','青岛','中国香港','香港'];
+  const lower = s.toLowerCase();
+  const enMap = [
+    ['shenzhen','深圳'], ['guangzhou','广州'], ['beijing','北京'], ['shanghai','上海'],
+    ['hangzhou','杭州'], ['chengdu','成都'], ['hefei','合肥'], ['qingdao','青岛'],
+    ['xi\'an','西安'], ['xian','西安'], ['hong kong','香港'], ['hongkong','香港'],
+  ];
+  for(const [en, zh] of enMap){
+    if(lower.includes(en)) return zh;
+  }
+  const core = ['深圳','广州','北京','上海','杭州','成都','西安','合肥','青岛','香港','中国香港'];
   return core.find(k=> s.includes(k)) || s;
+}
+
+/** 结果区筛选器：仅展示中文选项 */
+const FILTER_CITIES = ['深圳','广州','北京','上海','杭州','成都','西安','合肥','青岛','香港'];
+const FILTER_CATEGORIES = [
+  '技术','产品','设计','市场','内容','营销与公关','职能','人力资源',
+  '财务','法律与公共策略','战略与投资','销售、服务与支持','行政支持',
+];
+/** 人才专项筛选项（对应腾讯招聘「人才专项」） */
+const FILTER_TALENT_PROGRAMS = ['青云计划-应届生', '青云计划-实习生', 'Pre留学生实习'];
+
+/** 判断岗位是否属于指定人才专项 */
+function jobMatchesTalentProgram(job, program){
+  if(!program) return true;
+  const text = (job.project || '') + (job.department || '') + (job.title || '');
+  return text.includes(program);
+}
+
+/** 岗位类别中英文映射（筛选/匹配时中文标签可命中英文数据） */
+const CATEGORY_GROUPS = {
+  '技术': ['技术', 'Technology'],
+  '产品': ['产品', 'Product'],
+  '设计': ['设计', 'Design & Art'],
+  '市场': ['市场', 'Marketing & Public Relations'],
+  '内容': ['内容', 'Content'],
+  '营销与公关': ['营销与公关', 'Marketing & Public Relations'],
+  '职能': ['职能', 'Administration', '行政支持'],
+  '人力资源': ['人力资源', 'Human Resources'],
+  '财务': ['财务', 'Finance'],
+  '法律与公共策略': ['法律与公共策略', 'Legal & Public Affairs Strategy'],
+  '战略与投资': ['战略与投资', 'Strategy & Investment'],
+  '销售、服务与支持': ['销售、服务与支持', 'Sales,Service & Support', 'Sales, Service & Support'],
+  '行政支持': ['行政支持', 'Administration'],
+};
+
+/** 按中文类别标签匹配岗位（兼容底层英文 category 字段） */
+function jobMatchesCategoryLabel(job, cnLabel){
+  if(!cnLabel) return true;
+  const groups = CATEGORY_GROUPS[cnLabel] || [cnLabel];
+  return groups.includes(job.type);
+}
+
+/** 岗位全部工作地点（去重） */
+function getJobLocationList(job){
+  const list = [job.location, job.city, ...(job.locations || [])].filter(Boolean).map(String);
+  return [...new Set(list)];
+}
+
+/** 官网主招聘城市（卡片主位展示，优先 location 字段） */
+function getJobOfficialLocation(job){
+  if(!job) return '不限';
+  return job.location || (job.locations && job.locations[0]) || job.city || '不限';
+}
+
+/** 官网全部招聘城市（多城时用顿号拼接） */
+function getJobOfficialLocationsText(job){
+  const locs = (job.locations && job.locations.length)
+    ? [...new Set(job.locations.map(String))]
+    : getJobLocationList(job);
+  return locs.length ? locs.join('、') : getJobOfficialLocation(job);
+}
+
+/** 判断岗位是否位于用户期望城市（按归一化城市名精确匹配） */
+function jobMatchesCity(job, wantCity){
+  if(!wantCity || wantCity === '不限') return true;
+  const want = normalizeCity(wantCity);
+  return getJobLocationList(job).some(loc => normalizeCity(loc) === want);
+}
+
+/** 在用户筛选城市下，展示应命中的城市标签（优先显示用户所选城市） */
+function resolveMatchedCityLabel(job, wantCity){
+  if(!wantCity || wantCity === '不限') return job.city || job.location || '不限';
+  const want = normalizeCity(wantCity);
+  if(jobMatchesCity(job, want)) return want;
+  const primary = normalizeCity(job.city || job.location || '');
+  return primary || job.city || job.location || '';
+}
+
+/** 判断岗位是否属于用户选择的岗位类型 */
+function jobMatchesCategory(job, formType){
+  if(!formType) return true;
+  return jobMatchesCategoryLabel(job, mapFormTypeToCategory(formType));
 }
 
 /** 表单岗位类型 → 腾讯招聘类别 */
 function mapFormTypeToCategory(t){
   const m = { '技术研发':'技术', '产品':'产品', '设计':'设计', '数据分析':'技术', '运营':'市场', '市场':'市场' };
   return m[t] || t;
+}
+
+/** 招聘类别 → 表单岗位类型（双向同步用） */
+function mapCategoryToFormType(cat){
+  const m = { '技术':'技术研发', '产品':'产品', '设计':'设计', '市场':'运营' };
+  return m[cat] || cat;
+}
+
+/** 读取表单 + 结果区筛选器的完整匹配条件 */
+function getActiveMatchCriteria(){
+  const profile = collectProfile();
+  const fc = document.getElementById('filterCategory')?.value || '';
+  const fl = document.getElementById('filterLocation')?.value || '';
+  const fs = document.getElementById('filterSource')?.value || '';
+  const ftp = document.getElementById('filterTalentProgram')?.value || '';
+  const city = fl || profile.city || '';
+  const category = fc || mapFormTypeToCategory(profile.type);
+  return {
+    ...profile,
+    city: city === '不限' ? '' : city,
+    category,
+    type: profile.type || mapCategoryToFormType(category),
+    source: fs,
+    talentProgram: ftp,
+  };
+}
+
+/** 当前生效的筛选标签（摘要栏展示） */
+function getActiveFilterLabels(){
+  const c = getActiveMatchCriteria();
+  const labels = [];
+  if(c.city) labels.push(c.city);
+  if(c.category) labels.push(c.category);
+  if(c.talentProgram) labels.push(c.talentProgram);
+  if(c.source === 'campus') labels.push('校招');
+  else if(c.source === 'social') labels.push('社招');
+  return labels;
+}
+
+/** 按完整条件筛选岗位池（城市 / 类别 / 校社招 / 人才专项） */
+function getMatchPool(criteria){
+  const c = criteria || getActiveMatchCriteria();
+  let pool = JOB_DB;
+  if(c.city){
+    pool = pool.filter(j=> jobMatchesCity(j, c.city));
+  }
+  if(c.category){
+    pool = pool.filter(j=> jobMatchesCategoryLabel(j, c.category));
+  } else if(c.type){
+    pool = pool.filter(j=> jobMatchesCategory(j, c.type));
+  }
+  if(c.source){
+    pool = pool.filter(j=> j.source === c.source);
+  }
+  if(c.talentProgram){
+    pool = pool.filter(j=> jobMatchesTalentProgram(j, c.talentProgram));
+  }
+  return pool;
+}
+
+let syncLock = false;
+
+/** 表单期望城市/岗位类型 → 结果区筛选器 */
+function syncFormToFilters(){
+  if(syncLock) return;
+  syncLock = true;
+  const city = val('f-city');
+  const type = val('f-type');
+  const cat = mapFormTypeToCategory(type);
+  const locSel = document.getElementById('filterLocation');
+  const catSel = document.getElementById('filterCategory');
+  if(locSel){
+    if(city && city !== '不限'){
+      const want = normalizeCity(city);
+      locSel.value = [...locSel.options].some(o=> o.value === want) ? want : '';
+    } else {
+      locSel.value = '';
+    }
+  }
+  if(catSel){
+    catSel.value = (type && FILTER_CATEGORIES.includes(cat)) ? cat : '';
+  }
+  syncLock = false;
+}
+
+/** 结果区城市/类别筛选器 → 表单 */
+function syncFiltersToForm(){
+  if(syncLock) return;
+  syncLock = true;
+  const fl = document.getElementById('filterLocation')?.value || '';
+  const fc = document.getElementById('filterCategory')?.value || '';
+  const cityEl = document.getElementById('f-city');
+  const typeEl = document.getElementById('f-type');
+  if(cityEl) cityEl.value = fl;
+  if(typeEl) typeEl.value = fc ? mapCategoryToFormType(fc) : '';
+  syncLock = false;
+}
+
+/** 匹配完成后，同步结果区筛选器与用户表单选择 */
+function syncFiltersFromProfile(profile){
+  syncLock = true;
+  const p = profile || userProfile;
+  if(p.city != null && document.getElementById('f-city')) document.getElementById('f-city').value = p.city || '';
+  if(p.type != null && document.getElementById('f-type')) document.getElementById('f-type').value = p.type || '';
+  syncLock = false;
+  syncFormToFilters();
+}
+
+/** 无结果时的提示文案 */
+function buildEmptyMatchHtml(criteria, poolSize){
+  const labels = getActiveFilterLabels();
+  const cond = labels.length ? labels.join(' · ') : '当前条件';
+  let hint = '请放宽城市、岗位类型或人才专项后重试。';
+  if(criteria?.talentProgram && criteria?.category === '产品'){
+    hint = '岗位库中「' + criteria.talentProgram + '」均为技术类岗位，与「产品」暂无交集。可尝试将岗位类型改为「技术研发」，或取消人才专项筛选。';
+  } else if(poolSize === 0){
+    hint = '当前组合在岗位库中暂无记录，请调整筛选条件后重试。';
+  }
+  return `<div class="text-center text-caption py-12 bg-white rounded-md shadow-card border border-[#e5e8ed] px-5 sm:px-8">
+    <p class="text-body text-ink-900 mb-2">未找到符合「${escapeHtml(cond)}」的匹配岗位</p>
+    <p class="text-caption text-ink-500">${escapeHtml(hint)}</p>
+  </div>`;
+}
+
+let filterRematchTimer;
+
+/** 表单城市/类型变更：同步筛选器，若已匹配则重新计算 */
+function onFormCityTypeChange(){
+  recalcForm();
+  syncFormToFilters();
+  if(hasMatchedOnce) debounceRematchFromFilters();
+}
+
+/** 结果区筛选变更：同步表单，重新按完整条件匹配 */
+function onMatchFilterChange(){
+  syncFiltersToForm();
+  userProfile = collectProfile();
+  saveProfile();
+  recalcForm();
+  if(hasMatchedOnce) debounceRematchFromFilters();
+}
+
+/** 仅排序变更：不重算匹配 */
+function onSortFilterChange(){
+  renderJobs(false);
+}
+
+function debounceRematchFromFilters(){
+  clearTimeout(filterRematchTimer);
+  filterRematchTimer = setTimeout(refreshMatchFromFilters, 300);
+}
+
+/** 按当前全部筛选条件静默重算匹配结果 */
+function refreshMatchFromFilters(){
+  if(!jobsReady) return;
+  const criteria = getActiveMatchCriteria();
+  userProfile = collectProfile();
+  runMatchScoring(criteria, (scored, poolSize)=>{
+    lastPoolSize = poolSize;
+    matchedJobs = scored.sort((a,b)=> b.score - a.score);
+    hasMatchedOnce = true;
+    saveMatchResults();
+    document.getElementById('matchSummary').classList.remove('hidden');
+    if(!matchedJobs.length){
+      displayedJobCount = 0;
+      renderMatchSummary(poolSize);
+      document.getElementById('jobList').innerHTML = buildEmptyMatchHtml(criteria, poolSize);
+      return;
+    }
+    renderJobs(false);
+  });
 }
 
 /** 从文本提取技能标签 */
@@ -791,11 +1462,10 @@ async function loadJobs(){
     JOB_DB = (data.jobs || []).map(mapJobLite);
     jobsReady = JOB_DB.length > 0;
     populateFilters();
-    const scraped = jobsMeta.scraped_at ? ` · 更新于 ${jobsMeta.scraped_at}` : '';
     const src = jobsMeta.campus_count != null
       ? `（校招 ${jobsMeta.campus_count || 0} + 社招 ${jobsMeta.social_count || 0}）`
       : '';
-    const msg = `已加载 ${JOB_DB.length} 个腾讯官方岗位${src}${scraped}`;
+    const msg = `已加载 ${JOB_DB.length} 个腾讯官方岗位${src}`;
     if(statusEl) statusEl.textContent = msg;
     if(footerEl) footerEl.textContent = `${JOB_DB.length} 条岗位`;
     recalcForm();
@@ -808,14 +1478,16 @@ async function loadJobs(){
   }
 }
 
-/** 根据岗位数据动态填充筛选器（安全 DOM 创建，防 XSS） */
+/** 填充结果区筛选器（仅中文城市/类别，且只展示库中确有岗位的选项） */
 function populateFilters(){
   const catSel = document.getElementById('filterCategory');
   const locSel = document.getElementById('filterLocation');
+  const talentSel = document.getElementById('filterTalentProgram');
   if(!catSel || !locSel) return;
-  const cats = [...new Set(JOB_DB.map(j=> j.type).filter(Boolean))].sort();
-  const locs = [...new Set(JOB_DB.map(j=> normalizeCity(j.city)).filter(Boolean))].sort();
-  const keepCat = catSel.value, keepLoc = locSel.value;
+  const cats = FILTER_CATEGORIES.filter(cn=> JOB_DB.some(j=> jobMatchesCategoryLabel(j, cn)));
+  const locs = FILTER_CITIES.filter(city=> JOB_DB.some(j=> jobMatchesCity(j, city)));
+  const programs = FILTER_TALENT_PROGRAMS.filter(p=> JOB_DB.some(j=> jobMatchesTalentProgram(j, p)));
+  const keepCat = catSel.value, keepLoc = locSel.value, keepTalent = talentSel?.value || '';
   const fillSelect = (sel, items, placeholder)=>{
     sel.innerHTML = '';
     const opt0 = document.createElement('option');
@@ -829,8 +1501,12 @@ function populateFilters(){
   };
   fillSelect(catSel, cats, '全部类别');
   fillSelect(locSel, locs, '全部城市');
+  if(talentSel) fillSelect(talentSel, programs, '全部人才专项');
   if(cats.includes(keepCat)) catSel.value = keepCat;
+  else if(keepCat && FILTER_CATEGORIES.includes(keepCat)) catSel.value = keepCat;
   if(locs.includes(keepLoc)) locSel.value = keepLoc;
+  else if(keepLoc && FILTER_CITIES.includes(keepLoc)) locSel.value = keepLoc;
+  if(talentSel && programs.includes(keepTalent)) talentSel.value = keepTalent;
 }
 
 /* ---------- 工具函数 ---------- */
@@ -843,9 +1519,12 @@ function escapeHtml(str){
 
 function setBar(barId, pctId, pct){
   const bar = document.getElementById(barId);
-  if(bar) bar.style.width = pct+'%';
+  if(bar){
+    bar.style.width = pct + '%';
+    bar.classList.toggle('is-ready', pct >= 100);
+  }
   const pctEl = document.getElementById(pctId);
-  if(pctEl) pctEl.textContent = pct+'%';
+  if(pctEl) pctEl.textContent = pct + '%';
 }
 function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
 
@@ -856,11 +1535,34 @@ function companyLogoHtml(company){
   return `<div class="company-logo" style="background:${cfg.color}" title="${escapeHtml(brand)}">${escapeHtml(cfg.abbr)}</div>`;
 }
 
-/** 匹配度等级标签 */
+/** 匹配度分级（分数与标签、环形颜色统一） */
+function getMatchLevel(score){
+  const s = Math.max(0, Math.round(Number(score) || 0));
+  if(s >= 85) return { score: s, label: '高度匹配', badgeClass: 'match-badge-high', ringColor: '#0052D9' };
+  if(s >= 70) return { score: s, label: '良好匹配', badgeClass: 'match-badge-mid', ringColor: '#2667e8' };
+  if(s >= 55) return { score: s, label: '一般匹配', badgeClass: 'match-badge-low', ringColor: '#86909c' };
+  if(s >= 40) return { score: s, label: '较弱匹配', badgeClass: 'match-badge-weak', ringColor: '#a0a8b5' };
+  return { score: s, label: '参考匹配', badgeClass: 'match-badge-ref', ringColor: '#cf1322' };
+}
+
+/** 匹配度等级标签 HTML */
 function matchLevelBadge(score){
-  if(score>=82) return '<span class="match-badge match-badge-high">高度匹配</span>';
-  if(score>=68) return '<span class="match-badge match-badge-mid">良好匹配</span>';
-  return '<span class="match-badge match-badge-low">一般匹配</span>';
+  const lv = getMatchLevel(score);
+  return `<span class="match-badge ${lv.badgeClass}">${lv.label}</span>`;
+}
+
+/** 无动画时直接展示环形进度与分数 */
+function setJobCardScores(scope){
+  scope.querySelectorAll('.ring-fg').forEach(c=>{
+    const t = +c.dataset.target;
+    const r = +(c.dataset.r || 30);
+    const C = 2 * Math.PI * r;
+    c.style.strokeDasharray = C;
+    c.style.strokeDashoffset = C * (1 - t / 100);
+  });
+  scope.querySelectorAll('.cnt').forEach(el=>{
+    el.textContent = el.dataset.target;
+  });
 }
 
 /** 防抖自动保存（恢复数据时不触发） */
@@ -876,8 +1578,15 @@ function debounceSaveProfile(){
 // Tab 切换（默认：结构化表单）
 function switchTab(name){
   const isForm = name === 'form';
-  document.getElementById('pane-form').classList.toggle('hidden', !isForm);
-  document.getElementById('pane-upload').classList.toggle('hidden', isForm);
+  const paneForm = document.getElementById('pane-form');
+  const paneUpload = document.getElementById('pane-upload');
+  paneForm.classList.toggle('hidden', !isForm);
+  paneUpload.classList.toggle('hidden', isForm);
+  if(isForm){
+    paneForm.classList.remove('pane-enter'); void paneForm.offsetWidth; paneForm.classList.add('pane-enter');
+  } else {
+    paneUpload.classList.remove('pane-enter'); void paneUpload.offsetWidth; paneUpload.classList.add('pane-enter');
+  }
   toggleActive('tab-form', isForm);
   toggleActive('tab-upload', !isForm);
   recalcForm();
@@ -885,10 +1594,8 @@ function switchTab(name){
 }
 function toggleActive(id, active){
   const el = document.getElementById(id);
-  el.classList.toggle('border-tc-500', active);
-  el.classList.toggle('text-tc-500', active);
-  el.classList.toggle('border-transparent', !active);
-  el.classList.toggle('text-ink-500', !active);
+  if(!el) return;
+  el.classList.toggle('is-active', active);
 }
 
 // 渲染技能标签池（按分组展示）
@@ -901,7 +1608,7 @@ function renderSkillPool(){
     const section = document.createElement('div');
     section.className = 'skill-group mb-3 last:mb-0';
     const label = document.createElement('p');
-    label.className = 'text-caption text-ink-500 mb-2';
+    label.className = 'skill-group-label';
     label.textContent = group.label;
     section.appendChild(label);
     const chips = document.createElement('div');
@@ -923,12 +1630,22 @@ function renderSkillPool(){
 }
 function renderChosen(){
   const box = document.getElementById('skillChosen');
+  const panel = document.getElementById('skillPanel');
   box.innerHTML = '';
+  if(!chosenSkills.size){
+    box.innerHTML = '<p class="skill-chosen-empty">暂未添加技能，点击上方标签快速添加</p>';
+    panel?.classList.remove('has-skills');
+    return;
+  }
+  panel?.classList.add('has-skills');
   chosenSkills.forEach(s=>{
     const chip = document.createElement('span');
-    chip.className = 'tag-chip inline-flex items-center gap-1.5 text-caption px-3 py-1.5 rounded bg-tc-50 text-tc-500 border border-tc-100';
-    chip.innerHTML = `${s} <span class="cursor-pointer hover:text-tc-700">✕</span>`;
-    chip.querySelector('span').onclick = ()=>{ chosenSkills.delete(s); renderSkillPool(); renderChosen(); recalcForm(); saveProfile(); };
+    chip.className = 'tag-chip-selected';
+    chip.innerHTML = `${s} <span class="chip-remove" role="button" tabindex="0" aria-label="移除 ${s}">✕</span>`;
+    const remove = chip.querySelector('.chip-remove');
+    const doRemove = ()=>{ chosenSkills.delete(s); renderSkillPool(); renderChosen(); recalcForm(); saveProfile(); };
+    remove.onclick = doRemove;
+    remove.onkeydown = e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); doRemove(); } };
     box.appendChild(chip);
   });
 }
@@ -1066,20 +1783,33 @@ function isFormMode(){ return !document.getElementById('pane-form').classList.co
 // 实时校验 + 完成度计算
 function recalcForm(){
   let pct = 0, ready = false;
+  const hintEl = document.getElementById('completeHint');
+  const matchBtn = document.getElementById('matchBtn');
   if(isFormMode()){
     const edu = val('f-edu'), intent = val('f-intent'), proj = val('f-proj'),
           intern = val('f-intern'), portfolio = val('f-portfolio'), awards = val('f-awards'),
           city = val('f-city'), type = val('f-type');
     const items = [edu, intent, chosenSkills.size>0?'1':'', proj, intern, portfolio, awards, city, type];
     pct = Math.round(items.filter(Boolean).length / items.length * 100);
-    ready = !!edu && !!intent;       // 必填项
+    ready = !!edu && !!intent;
+    if(hintEl){
+      if(ready && pct < 60) hintEl.textContent = '可以开始匹配了，继续完善信息可提升精准度';
+      else if(ready) hintEl.textContent = '信息较完整，匹配结果将更精准';
+      else hintEl.textContent = '填写教育背景与求职意向后即可开始匹配';
+    }
   } else {
     const len = val('resumeText').length;
     pct = Math.min(100, Math.round(len / 120 * 100));
     ready = len >= 20;
+    if(hintEl){
+      hintEl.textContent = ready ? '简历已就绪，可以开始智能匹配' : '上传简历并解析完成后即可匹配';
+    }
   }
   setBar('completeBar','completePct',pct);
-  document.getElementById('matchBtn').disabled = !ready || !jobsReady;
+  if(matchBtn){
+    matchBtn.disabled = !ready || !jobsReady;
+    matchBtn.classList.toggle('match-btn-ready', ready && jobsReady);
+  }
   debounceSaveProfile();
 }
 
@@ -1161,21 +1891,21 @@ function saveMatchResults(){
   try{ localStorage.setItem(MKEY, JSON.stringify(data)); }catch(e){}
 }
 
-/** 恢复最近一次匹配结果 */
+/** 恢复最近一次匹配结果（按当前筛选条件重新计算，避免城市等条件错位） */
 function loadMatchResults(){
   try{
     const raw = localStorage.getItem(MKEY);
     if(!raw) return;
     const data = JSON.parse(raw);
     if(!data.jobs?.length) return;
-    matchedJobs = data.jobs;
     userProfile = data.profile || {};
-    document.getElementById('step-match').classList.remove('hidden');
+    hasMatchedOnce = true;
+    sectionEl('step-match')?.classList.remove('hidden');
     document.getElementById('matchLoading').classList.add('hidden');
     document.getElementById('matchSummary').classList.remove('hidden');
     setStep(2);
-    renderMatchSummary();
-    renderJobs(false);
+    syncFiltersFromProfile(userProfile);
+    refreshMatchFromFilters();
   }catch(e){}
 }
 
@@ -1232,10 +1962,9 @@ function scoreJob(job, p){
   breakdown.skill = Math.min(38, matchedTags.length * 9 + (matchedTags.length >= Math.max(allTags.length,1) ? 6 : 0));
   breakdown.jd = Math.min(14, matchedJd.length * 4);
 
-  if(p.city){
-    const want = normalizeCity(p.city);
-    const locs = (job.locations||[job.city]).map(normalizeCity);
-    breakdown.city = (p.city === '不限' || locs.some(l=> l.includes(want) || want.includes(l))) ? 14 : 4;
+  if(p.city && p.city !== '不限'){
+    if(jobMatchesCity(job, p.city)) breakdown.city = 14;
+    else breakdown.city = 4;
   }
 
   if(p.type){
@@ -1277,12 +2006,12 @@ function scoreJob(job, p){
   }
 
   let score = 32 + breakdown.skill + breakdown.city + breakdown.type + breakdown.intent + breakdown.edu + breakdown.jd + internBonus + portfolioBonus + awardBonus;
-  score = Math.max(38, Math.min(96, Math.round(score)));
+  score = Math.max(0, Math.min(98, Math.round(score)));
 
   const highlights = [];
   if(matchedTags.length) highlights.push({ k:'技能命中', v: matchedTags.slice(0,4).join('、'), type:'skill' });
   if(missedTags.length && missedTags.length <= 3) highlights.push({ k:'待补充', v: missedTags.slice(0,3).join('、'), type:'gap' });
-  if(breakdown.city >= 10) highlights.push({ k:'地点匹配', v: job.city, type:'city' });
+  if(breakdown.city >= 10) highlights.push({ k:'地点匹配', v: resolveMatchedCityLabel(job, p.city), type:'city' });
   if(breakdown.type >= 10) highlights.push({ k:'类别匹配', v: job.type, type:'type' });
   if(breakdown.edu >= 6) highlights.push({ k:'学历契合', v: edu || '符合要求', type:'edu' });
   if(breakdown.intent >= 6) highlights.push({ k:'意向契合', v: p.intent || '简历方向一致', type:'intent' });
@@ -1292,7 +2021,7 @@ function scoreJob(job, p){
   if(awardBonus >= 3) highlights.push({ k:'荣誉奖项', v: p.awards.slice(0, 24) + (p.awards.length > 24 ? '…' : ''), type:'award' });
   if(!highlights.length) highlights.push({ k:'方向相关', v: '岗位与背景存在关联', type:'default' });
 
-  return { ...job, score, matchedTags, missedTags, matchedJd, breakdown, highlights };
+  return { ...job, score, matchedTags, missedTags, matchedJd, breakdown, highlights, displayCity: resolveMatchedCityLabel(job, p.city) };
 }
 
 const LOADING_STEPS = ['正在解析你的能力画像…','提取技能与项目关键词…','计算多维匹配度…','生成推荐排序…'];
@@ -1347,15 +2076,17 @@ function startMatch(){
 
   userProfile = collectProfile();
   saveProfile();
-  document.getElementById('step-match').classList.remove('hidden');
+  syncFormToFilters();
+  sectionEl('step-match')?.classList.remove('hidden');
   document.getElementById('matchSummary').classList.add('hidden');
   setStep(2);
-  document.getElementById('step-match').scrollIntoView({behavior:'smooth'});
+  sectionEl('step-match')?.scrollIntoView({behavior:'smooth'});
 
   const loading = document.getElementById('matchLoading');
   const list = document.getElementById('jobList');
   loading.classList.remove('hidden');
   list.innerHTML = '';
+  displayedJobCount = 0;
   document.getElementById('scoreCalcPanel').classList.add('hidden');
   document.getElementById('loadBar').style.width = '0%';
 
@@ -1374,18 +2105,24 @@ function startMatch(){
   }, 500);
 }
 
-const DISPLAY_LIMIT = 80;   // 单次最多渲染岗位卡片数
 const SCORE_CHUNK = 300;    // 分批计算匹配度，避免主线程长时间阻塞
+const DISPLAY_PAGE_SIZE = 10; // 岗位卡片分页展示，每次加载条数
+let displayedJobCount = 0;    // 当前已渲染到页面的岗位数
 
-/** 分批计算全库匹配度，完成后回调 */
+/** 分批计算匹配度（先按期望城市/岗位类型筛选，再打分排序） */
 function runMatchScoring(profile, onDone){
+  const pool = getMatchPool(profile);
+  if(!pool.length){
+    onDone([], 0);
+    return;
+  }
   const scored = [];
   let i = 0;
   function chunk(){
-    const end = Math.min(i + SCORE_CHUNK, JOB_DB.length);
-    for(; i < end; i++) scored.push(scoreJob(JOB_DB[i], profile));
-    if(i < JOB_DB.length) setTimeout(chunk, 0);
-    else onDone(scored);
+    const end = Math.min(i + SCORE_CHUNK, pool.length);
+    for(; i < end; i++) scored.push(scoreJob(pool[i], profile));
+    if(i < pool.length) setTimeout(chunk, 0);
+    else onDone(scored, pool.length);
   }
   chunk();
 }
@@ -1393,70 +2130,152 @@ function runMatchScoring(profile, onDone){
 /** 匹配计算完成后的收尾 */
 function finishMatch(){
   document.getElementById('loadBar').style.width = '100%';
-  runMatchScoring(userProfile, scored=>{
-    matchedJobs = scored.sort((a,b)=> b.score - a.score).slice(0, 200);
+  const criteria = getActiveMatchCriteria();
+  runMatchScoring(criteria, (scored, poolSize)=>{
+    lastPoolSize = poolSize;
+    hasMatchedOnce = true;
+    matchedJobs = scored.sort((a,b)=> b.score - a.score);
+    syncFiltersFromProfile(userProfile);
     saveMatchResults();
     document.getElementById('matchLoading').classList.add('hidden');
-    renderMatchSummary();
+    if(!matchedJobs.length){
+      displayedJobCount = 0;
+      document.getElementById('jobList').innerHTML = buildEmptyMatchHtml(criteria, poolSize);
+      document.getElementById('matchSummary').classList.add('hidden');
+      toast('当前筛选条件下无匹配岗位');
+      return;
+    }
     renderJobs(true);
     const top = Math.max(...matchedJobs.map(j=>j.score));
-    saveHistory('岗位匹配', `匹配到 ${JOB_DB.length} 个岗位，展示 Top ${matchedJobs.length}，最高匹配度 ${top}%`);
+    const filterNote = getActiveFilterLabels();
+    const note = filterNote.length ? `（已筛选：${filterNote.join(' · ')}）` : '';
+    saveHistory('岗位匹配', `在 ${poolSize} 个岗位中匹配 ${matchedJobs.length} 条，最高 ${top}%${note}`);
   });
 }
 
 /** 渲染匹配结果摘要栏 */
-function renderMatchSummary(){
-  if(!matchedJobs.length) return;
+function renderMatchSummary(poolSize){
+  if(!matchedJobs.length && !poolSize) return;
   const summary = document.getElementById('matchSummary');
   summary.classList.remove('hidden');
-  const top = Math.max(...matchedJobs.map(j=>j.score));
-  document.getElementById('matchCount').textContent = matchedJobs.length;
+  const top = matchedJobs.length ? Math.max(...matchedJobs.map(j=>j.score)) : 0;
+  const pool = poolSize ?? lastPoolSize ?? matchedJobs.length;
+  lastPoolSize = pool;
+  const total = getFilteredJobTotal();
+  const shown = getDisplayedJobCount();
+  const countLabel = formatDisplayCount(shown, total);
+  document.getElementById('matchCount').textContent = countLabel;
   const topEl = document.getElementById('topScore');
   topEl.textContent = '0';
-  animateNumber(topEl, 0, top, 700);
-  const allSkills = new Set();
-  matchedJobs.forEach(j=> j.matchedTags?.forEach(s=> allSkills.add(s)));
+  if(matchedJobs.length) animateNumber(topEl, 0, top, 700);
+  else topEl.textContent = '0';
+  const filterHint = getActiveFilterLabels();
   const skillsBox = document.getElementById('topSkills');
-  const skillArr = [...allSkills].slice(0,5);
-  skillsBox.innerHTML = skillArr.length
+  const skillArr = [...new Set(matchedJobs.flatMap(j=> j.matchedTags||[]))].slice(0,5);
+  const poolNote = pool ? `岗位库命中 ${pool} 个` : '';
+  const displayNote = total ? `展示 ${countLabel} 条` : '';
+  const notes = [poolNote, displayNote].filter(Boolean).join('，');
+  const noteWrap = notes ? `（${notes}）` : '';
+  const hintText = filterHint.length
+    ? `<span class="text-caption text-ink-500 mr-2">已按 ${filterHint.join(' · ')} 筛选${noteWrap}</span>`
+    : (noteWrap ? `<span class="text-caption text-ink-500 mr-2">${noteWrap}</span>` : '');
+  skillsBox.innerHTML = hintText + (skillArr.length
     ? skillArr.map(s=>`<span class="skill-hit">✓ ${s}</span>`).join('')
-    : '<span class="text-caption">填写更多技能可获得更精准匹配</span>';
+    : '<span class="text-caption">填写更多技能可获得更精准匹配</span>');
 }
 
-/** 渲染岗位卡片 */
-function renderJobs(animate){
-  let arr = [...matchedJobs];
-  const fc = document.getElementById('filterCategory').value;
-  const fl = document.getElementById('filterLocation').value;
-  const fs = document.getElementById('filterSource').value;
-  const sb = document.getElementById('sortBy').value;
-  if(fc) arr = arr.filter(j=> j.type === fc);
-  if(fl) arr = arr.filter(j=> normalizeCity(j.city) === fl || (j.locations||[]).some(l=> normalizeCity(l) === fl));
-  if(fs) arr = arr.filter(j=> j.source === fs);
-  arr.sort((a,b)=> sb === 'title' ? a.title.localeCompare(b.title, 'zh') : b.score - a.score);
+/** 格式化「已展示 / 总数」文案 */
+function formatDisplayCount(shown, total){
+  if(!total) return '0';
+  return shown >= total ? String(total) : `${shown} / ${total}`;
+}
 
+/** 当前页面上已渲染的岗位卡片数 */
+function getDisplayedJobCount(){
+  return displayedJobCount;
+}
+
+/** 按结果区筛选与排序后的岗位列表（全量，用于匹配展示分页） */
+function getFilteredSortedJobs(){
+  let arr = [...matchedJobs];
+  const fc = document.getElementById('filterCategory')?.value || '';
+  const fl = document.getElementById('filterLocation')?.value || '';
+  const fs = document.getElementById('filterSource')?.value || '';
+  const ftp = document.getElementById('filterTalentProgram')?.value || '';
+  const sb = document.getElementById('sortBy')?.value || 'score';
+  if(fc) arr = arr.filter(j=> jobMatchesCategoryLabel(j, fc));
+  if(fl) arr = arr.filter(j=> jobMatchesCity(j, fl));
+  if(fs) arr = arr.filter(j=> j.source === fs);
+  if(ftp) arr = arr.filter(j=> jobMatchesTalentProgram(j, ftp));
+  arr.sort((a,b)=> sb === 'title' ? a.title.localeCompare(b.title, 'zh') : b.score - a.score);
+  return arr;
+}
+
+/** 筛选排序后的岗位总数 */
+function getFilteredJobTotal(){
+  return getFilteredSortedJobs().length;
+}
+
+/** 更新或移除「加载更多」按钮 */
+function renderLoadMoreButton(list, total){
+  let btn = list.querySelector('#loadMoreJobsBtn');
+  const remaining = total - displayedJobCount;
+  if(remaining <= 0){
+    btn?.remove();
+    return;
+  }
+  if(!btn){
+    btn = document.createElement('button');
+    btn.id = 'loadMoreJobsBtn';
+    btn.type = 'button';
+    btn.className = 'btn-primary bg-tc-500 text-white px-8 py-3 rounded-md text-body font-medium self-center';
+    btn.addEventListener('click', loadMoreJobs);
+  }
+  btn.textContent = `加载更多（还剩 ${remaining} 条）`;
+  list.appendChild(btn);
+}
+
+/** 加载下一批岗位卡片（仅追加 DOM，不重算匹配） */
+function loadMoreJobs(){
+  renderJobs(false, true);
+}
+
+/** 渲染岗位卡片（animate：是否播放环形动画；append：是否追加下一批） */
+function renderJobs(animate, append){
+  const arr = getFilteredSortedJobs();
   const list = document.getElementById('jobList');
-  list.innerHTML = '';
+  const total = arr.length;
+
   if(!arr.length){
-    list.innerHTML = '<div class="text-center text-caption py-12 bg-white rounded-md border border-[#e5e8ed]">该筛选条件下暂无匹配岗位</div>';
+    displayedJobCount = 0;
+    list.innerHTML = buildEmptyMatchHtml(getActiveMatchCriteria(), lastPoolSize);
+    renderLoadMoreButton(list, 0);
+    renderMatchSummary(lastPoolSize);
     return;
   }
 
-  const total = arr.length;
-  const displayArr = arr.slice(0, DISPLAY_LIMIT);
-  if(total > DISPLAY_LIMIT){
-    const tip = document.createElement('div');
-    tip.className = 'text-caption text-ink-700 bg-tc-50 border border-tc-100 rounded-md px-4 py-3 mb-4';
-    tip.textContent = `共 ${total} 条匹配结果，当前展示得分最高的前 ${DISPLAY_LIMIT} 条，可使用筛选器缩小范围`;
-    list.appendChild(tip);
+  let startIdx;
+  if(!append){
+    list.innerHTML = '';
+    displayedJobCount = Math.min(DISPLAY_PAGE_SIZE, total);
+    startIdx = 0;
+  }else{
+    startIdx = displayedJobCount;
+    displayedJobCount = Math.min(displayedJobCount + DISPLAY_PAGE_SIZE, total);
   }
+  const endIdx = displayedJobCount;
+  const batch = arr.slice(startIdx, endIdx);
+  const loadMoreBtn = list.querySelector('#loadMoreJobsBtn');
+  const newCards = [];
 
-  displayArr.forEach((j,idx)=>{
+  batch.forEach((j, i)=>{
+    const idx = startIdx + i;
     const card = document.createElement('div');
-    card.className = 'job-card fade-up-stagger bg-white rounded-md shadow-card border border-[#e5e8ed] p-4 sm:p-6';
+    card.className = 'job-card fade-up-stagger bg-white rounded-md shadow-card border border-[#e5e8ed] p-5 sm:p-8';
     card.style.animationDelay = Math.min(idx * 0.05, 0.35) + 's';
     card.dataset.jobId = j.id;
-    const ringColor = j.score>=82 ? '#0052D9' : j.score>=68 ? '#2667e8' : '#86909c';
+    const lv = getMatchLevel(j.score);
+    const ringColor = lv.ringColor;
     const diagLabel = escapeHtml(j.company + ' · ' + j.title);
     const sourceBadge = j.source === 'social'
       ? '<span class="text-caption px-2 py-0.5 rounded bg-[#f0f2f5] text-ink-700">社招</span>'
@@ -1468,6 +2287,10 @@ function renderJobs(animate){
       return `<span class="${cls}"><b class="font-medium">${escapeHtml(h.k)}</b> · ${escapeHtml(h.v)}</span>`;
     }).join('');
     const skillHits = (j.matchedTags||[]).map(s=>`<span class="skill-hit">${escapeHtml(s)}</span>`).join('');
+    const officialLoc = getJobOfficialLocation(j);
+    const allLocs = j.locations?.length > 1
+      ? `<span class="text-caption text-ink-500">招聘城市：${escapeHtml(getJobOfficialLocationsText(j))}</span>`
+      : '';
 
     card.innerHTML = `
       <div class="job-card-layout">
@@ -1479,7 +2302,7 @@ function renderJobs(animate){
               data-target="${j.score}" data-r="30"/>
           </svg>
           <div class="absolute inset-0 flex flex-col items-center justify-center">
-            <span class="cnt text-base sm:text-lg font-semibold" style="color:${ringColor}" data-target="${j.score}">0</span>
+            <span class="cnt text-base sm:text-lg font-semibold" style="color:${ringColor}" data-target="${lv.score}">${lv.score}</span>
             <span class="text-caption -mt-0.5">匹配度</span>
           </div>
         </div>
@@ -1499,9 +2322,10 @@ function renderJobs(animate){
           </div>
           <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-3 text-caption">
             <span class="inline-flex items-center gap-1">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="2"/></svg>${escapeHtml(j.city)}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="2"/></svg>${escapeHtml(officialLoc)}
             </span>
             <span class="px-2 py-0.5 rounded bg-[#f0f2f5] text-ink-700">${escapeHtml(j.type)}</span>
+            ${allLocs}
           </div>
           ${skillHits ? `<div class="mt-3 flex flex-wrap gap-2">${skillHits}</div>` : ''}
           <div class="mt-3 flex flex-wrap gap-2">${hlHtml}</div>
@@ -1524,10 +2348,17 @@ function renderJobs(animate){
       openJobDetail(j.id);
     });
     card.addEventListener('click', ()=> openJobDetail(j.id));
-    list.appendChild(card);
+    if(loadMoreBtn) list.insertBefore(card, loadMoreBtn);
+    else list.appendChild(card);
+    newCards.push(card);
   });
 
-  if(animate) requestAnimationFrame(()=> animateRings(list));
+  if(animate && !append) requestAnimationFrame(()=> animateRings(list));
+  else if(append) newCards.forEach(card=> setJobCardScores(card));
+  else setJobCardScores(list);
+
+  renderLoadMoreButton(list, total);
+  renderMatchSummary(lastPoolSize);
 }
 
 function setBodyScroll(locked){
@@ -1542,11 +2373,17 @@ function openJobDetail(jobId){
   document.getElementById('jdDept').textContent = job.company;
   document.getElementById('jdResp').textContent = job.responsibility || job.desc || '暂无';
   document.getElementById('jdReq').textContent = job.requirement || '暂无';
+  const talentTag = FILTER_TALENT_PROGRAMS.find(p=> jobMatchesTalentProgram(job, p));
+  const matchLv = job.score != null ? getMatchLevel(job.score) : null;
+  const locMeta = job.locations?.length
+    ? `<span class="text-caption px-2 py-0.5 rounded bg-[#f0f2f5] text-ink-700" title="官网招聘城市">${escapeHtml(getJobOfficialLocationsText(job))}</span>`
+    : `<span class="text-caption px-2 py-0.5 rounded bg-[#f0f2f5] text-ink-700">${escapeHtml(getJobOfficialLocation(job))}</span>`;
   document.getElementById('jdMeta').innerHTML = [
-    `<span class="text-caption px-2 py-0.5 rounded bg-[#f0f2f5] text-ink-700">${escapeHtml(job.city)}</span>`,
+    locMeta,
     `<span class="text-caption px-2 py-0.5 rounded bg-[#f0f2f5] text-ink-700">${escapeHtml(job.type)}</span>`,
     `<span class="text-caption px-2 py-0.5 rounded ${job.source==='social'?'bg-[#f0f2f5] text-ink-700':'bg-tc-50 text-tc-500 border border-tc-100'}">${job.source==='social'?'社招':'校招'}</span>`,
-    job.score != null ? `<span class="text-caption px-2 py-0.5 rounded bg-tc-50 text-tc-500">匹配度 ${job.score}%</span>` : '',
+    talentTag ? `<span class="text-caption px-2 py-0.5 rounded bg-[#fff7e6] text-[#d46b08] border border-[#ffd591]">${escapeHtml(talentTag)}</span>` : '',
+    matchLv ? `<span class="text-caption px-2 py-0.5 rounded ${matchLv.badgeClass}">${matchLv.label} ${matchLv.score}%</span>` : '',
   ].join('');
   document.getElementById('jdTags').innerHTML = (job.tags||[]).map(t=>`<span class="skill-hit">${escapeHtml(t)}</span>`).join('');
   const link = document.getElementById('jdLink');
@@ -1601,6 +2438,7 @@ function animateRings(scope){
     setTimeout(()=> c.style.strokeDashoffset = C * (1 - t/100), 80);
   });
   scope.querySelectorAll('.cnt').forEach(el=>{
+    el.textContent = '0';
     animateNumber(el, 0, +el.dataset.target, 900);
   });
 }
@@ -1625,7 +2463,7 @@ function findJobFromInput(input){
 function diagFromJob(name){
   document.getElementById('diagJob').value = name;
   saveProfile();
-  document.getElementById('step-diag').scrollIntoView({behavior:'smooth'});
+  scrollToSection('step-diag', true);
   startDiag();
 }
 
@@ -1969,13 +2807,65 @@ function toast(msg){
 }
 
 /* ---------- 初始化 ---------- */
-renderSkillPool();
-loadProfile();
-recalcForm();
-loadMatchResults();
-renderHistory();
-loadJobs();
-initUploadZone();
+
+/** 获取页面模块节点（用 data-section 代替 id，避免刷新时浏览器按 hash 自动滚动） */
+function sectionEl(id){
+  return document.querySelector('[data-section="'+id+'"]');
+}
+
+/** 强制回到页面顶部（刷新时忽略 URL hash 锚点） */
+function pinScrollToTop(){
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
+
+/** 滚动到指定模块（仅用户点击导航时触发，刷新不自动跳转） */
+function scrollToSection(id, smooth){
+  const el = sectionEl(id);
+  if(!el) return;
+  el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+  if(id === 'step-match') setStep(2);
+  else if(id === 'step-diag') setStep(3);
+  else if(id === 'step-input') setStep(1);
+}
+
+/** 导航锚点：用户主动点击时才滚动 */
+function bindSectionNav(){
+  document.querySelectorAll('a[href^="#step-"]').forEach(a=>{
+    a.addEventListener('click', e=>{
+      const id = a.getAttribute('href').slice(1);
+      if(!sectionEl(id)) return;
+      e.preventDefault();
+      history.pushState(null, '', '#' + id);
+      scrollToSection(id, true);
+    });
+  });
+}
+
+function bootApp(){
+  renderSkillPool();
+  renderChosen();
+  loadProfile();
+  recalcForm();
+  loadMatchResults();
+  renderHistory();
+  loadJobs();
+  initUploadZone();
+  bindSectionNav();
+
+  pinScrollToTop();
+  requestAnimationFrame(()=>{
+    pinScrollToTop();
+    requestAnimationFrame(pinScrollToTop);
+  });
+  setTimeout(pinScrollToTop, 0);
+  setTimeout(pinScrollToTop, 50);
+  setTimeout(pinScrollToTop, 150);
+}
+
+bootApp();
+window.addEventListener('load', pinScrollToTop, { once: true });
 
 // 诊断报告渲染后，触发维度进度条动画
 const diagObs = new MutationObserver(()=>{

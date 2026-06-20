@@ -109,6 +109,28 @@ def fetch_campus_detail(post_id):
     return data.get("data")
 
 
+def extract_campus_responsibility(detail):
+    """从校招详情 API 提取岗位职责/课题描述（官网原文，按字段优先级）。"""
+    d = detail or {}
+    return normalize_text(
+        d.get("desc")
+        or d.get("topicDetail")
+        or d.get("introduction")
+        or ""
+    )
+
+
+def extract_campus_requirement(detail, project_name=""):
+    """从校招详情 API 提取任职要求/课题要求（官网原文，按字段优先级）。"""
+    d = detail or {}
+    direct = d.get("request") or d.get("topicRequirement")
+    if direct:
+        return normalize_text(direct)
+    if project_name == "应届毕业生":
+        return normalize_text(d.get("graduateBonus") or d.get("internBonus") or "")
+    return normalize_text(d.get("internBonus") or d.get("graduateBonus") or "")
+
+
 def map_campus_job(item, detail):
     """将校招数据映射为统一结构。"""
     post_id = item.get("postId") or (detail or {}).get("postId")
@@ -125,8 +147,9 @@ def map_campus_job(item, detail):
     elif item.get("workCities"):
         cities = [c.strip() for c in item["workCities"].split() if c.strip()]
     location = cities[0] if cities else "不限"
-    responsibility = normalize_text((detail or {}).get("desc", ""))
-    requirement = normalize_text((detail or {}).get("request", ""))
+    project_name = item.get("projectName", "") or (detail or {}).get("projectName", "")
+    responsibility = extract_campus_responsibility(detail)
+    requirement = extract_campus_requirement(detail, project_name)
     category = (detail or {}).get("tidName") or item.get("recruitLabelName", "")
     return {
         "id": str(post_id),
